@@ -38,7 +38,8 @@ class DetectorResourceSpec(GuardDutyResourceSpec):
             "Master",
             ScalarField("AccountId", alti_key="master_account_id"),
             ScalarField("RelationshipStatus", alti_key="master_relationship_status"),
-            ScalarField("InvitedAt", alti_key="master_invited_at"),
+            # ScalarField("InvitedAt", alti_key="master_invited_at"),
+            ScalarField("InvitedAt", alti_key="master_invited_at", optional=True),
             optional=True,
         ),
     )
@@ -91,7 +92,8 @@ class DetectorResourceSpec(GuardDutyResourceSpec):
         master_account_dict = master_account_resp.get("Master")
         if master_account_dict:
             detector["Master"] = {
-                key: master_account_dict[key]
+                # key: master_account_dict[key]
+                key: master_account_dict.get(key)
                 for key in ("AccountId", "RelationshipStatus", "InvitedAt",)
             }
         return detector
