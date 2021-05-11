@@ -66,3 +66,6 @@ public/**
 *.log
 postgres_docker_container.id
 *.prof
+
+# a place for custom config files etc. that shouldn't be checked in
+custom
