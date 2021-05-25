@@ -1,46 +1,94 @@
-    type ec2__instance {
+    interface IResource {
         id: Int!
+        uri: String!
+    }
+
+    type Resource implements IResource {
+        id: Int!
+        uri: String!
+    }
+
+    type ec2__instance implements IResource {
+        # ImageId
+        # Placement
+        # VpcId
+        # SubnetId
+        # X SecurityGroups
+        # IamInstanceProfile
+
+        id: Int!
+        uri: String!
+
         alti__ami_id: String!
-        alti__ami_name: String
+        alti__ami_name: String!
         alti__availability_zone: String
-        alti__instance_type: String
+        alti__instance_type: String!
         alti__id: String!
-        alti__launch_time: DateTime
+        alti__key_name: String
+        alti__launch_time: DateTime!
         alti__name: String
+        alti__platform: String
         alti__private_dns_name: String
         alti__private_ip_address: String
         alti__public_dns_name: String
+        alti__public_ip_address: String
         alti__state: String!
         alti__tenancy: String!
-        uri: String!
         tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
         region: aws__region @relation(name: "alti__region", direction: OUT)
-        # state_name: String! @ignore
+        security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+        # dummy: String! @ignore
     }
 
-    type alti__tag {
+    type ec2__security_group implements IResource {
         id: Int!
+        uri: String!
+
+        alti__name: String!
+        ingress_rules: [alti__ingress_rule] @relation(name: "alti__ingress_rule", direction: OUT)
+    }
+
+    type alti__ingress_rule implements IResource {
+        id: Int!
+        uri: String!
+
+        alti__ip_protocol: String!
+        alti__from_port: Int!
+        alti__to_port: Int!
+        ip_ranges: [alti__ip_range] @relation(name: "alti__ip_range", direction: OUT)
+    }
+
+    type alti__ip_range implements IResource {
+        id: Int!
+        uri: String!
+
+        alti__cidr_ip: String!
+        alti__first_ip: Int!
+        alti__last_ip: Int!
+    }
+
+
+    type alti__tag implements IResource {
+        id: Int!
+        uri: String!
+
         alti__key: String!
         alti__value: String
         ec2__instances: [ec2__instance] @relation(name: "alti__tag", direction: IN)
     }
 
-    type aws__region {
+    type aws__region implements IResource {
         id: Int!
+        uri: String!
+
         alti__id: String!
         alti__name: String
         alti__opt_in_status: String
-        uri: String!
         resources: [Resource] @relation(name: "alti__region", direction: IN)
         ec2__instances: [ec2__instance] @relation(name: "alti__region", direction: IN)
     }
 
-    type Resource {
-        id: Int
-        uri: String
-    }
-
     type Query {
-        sample_my_resources: [Resource]
-        sample_regions_with_ec2: [aws__region]
+        sample_my_resources: [Resource]!
+        sample_regions_with_ec2: [aws__region]!
     }
