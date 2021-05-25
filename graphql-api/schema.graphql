@@ -1,0 +1,46 @@
+    type ec2__instance {
+        id: Int!
+        alti__ami_id: String!
+        alti__ami_name: String
+        alti__availability_zone: String
+        alti__instance_type: String
+        alti__id: String!
+        alti__launch_time: DateTime
+        alti__name: String
+        alti__private_dns_name: String
+        alti__private_ip_address: String
+        alti__public_dns_name: String
+        alti__state: String!
+        alti__tenancy: String!
+        uri: String!
+        tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+        region: aws__region @relation(name: "alti__region", direction: OUT)
+        # state_name: String! @ignore
+    }
+
+    type alti__tag {
+        id: Int!
+        alti__key: String!
+        alti__value: String
+        ec2__instances: [ec2__instance] @relation(name: "alti__tag", direction: IN)
+    }
+
+    type aws__region {
+        id: Int!
+        alti__id: String!
+        alti__name: String
+        alti__opt_in_status: String
+        uri: String!
+        resources: [Resource] @relation(name: "alti__region", direction: IN)
+        ec2__instances: [ec2__instance] @relation(name: "alti__region", direction: IN)
+    }
+
+    type Resource {
+        id: Int
+        uri: String
+    }
+
+    type Query {
+        sample_my_resources: [Resource]
+        sample_regions_with_ec2: [aws__region]
+    }

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "apollo-server": "^2.23.0",
+    "graphql": "^15.5.0",
+    "lodash": "^4.17.21",
+    "neo4j-driver": "^4.2.3",
+    "neo4j-graphql-js": "^2.19.2"
+  }
+}
