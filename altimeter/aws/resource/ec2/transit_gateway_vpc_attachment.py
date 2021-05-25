@@ -14,7 +14,8 @@ from altimeter.core.graph.field.scalar_field import EmbeddedScalarField, ScalarF
 class TransitGatewayVpcAttachmentResourceSpec(EC2ResourceSpec):
     """Resource for Transit Gateway VPC Attachments"""
 
-    type_name = "transit-gateway-vpc-attachment"
+    # type_name = "transit-gateway-vpc-attachment"
+    type_name = "transit_gateway_vpc_attachment"
     schema = Schema(
         ScalarField("TransitGatewayAttachmentId"),
         ScalarField("TransitGatewayId"),

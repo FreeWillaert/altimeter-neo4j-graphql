@@ -17,7 +17,8 @@ from altimeter.core.graph.schema import Schema
 class TransitGatewayResourceSpec(EC2ResourceSpec):
     """Resource for TransitGateways"""
 
-    type_name = "transit-gateway"
+    # type_name = "transit-gateway"
+    type_name = "transit_gateway"
     schema = Schema(
         ScalarField("OwnerId"),
         ScalarField("State"),

@@ -17,7 +17,8 @@ from altimeter.core.graph.schema import Schema
 class SecurityGroupResourceSpec(EC2ResourceSpec):
     """Resource for SecurityGroups"""
 
-    type_name = "security-group"
+    # type_name = "security-group"
+    type_name="security_group"
     schema = Schema(
         ScalarField("GroupName", "name"),
         ListField(

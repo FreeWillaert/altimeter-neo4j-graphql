@@ -60,7 +60,7 @@ allow tcp port 22, ordered by uptime.
                               <alti:public_ip_address>         ?public_ip_address ;
                               <alti:state>                     'running' ;
                               <alti:launch_time>               ?launch_time ;
-                              <alti:security-group>            ?sg .
+                              <alti:security_group>            ?sg .
 
             ?sg               <alti:id>                        ?sg_id ;
                               <alti:ingress_rule>              ?ingress_rule .

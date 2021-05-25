@@ -15,7 +15,8 @@ from altimeter.core.graph.schema import Schema
 class VPCPeeringConnectionResourceSpec(EC2ResourceSpec):
     """Resource for VPC Peering Connections."""
 
-    type_name = "vpc-peering-connection"
+    # type_name = "vpc-peering-connection"
+    type_name = "vpc_peering_connection"
     schema = Schema(
         TransientResourceLinkField(
             "AccepterVpc", VPCResourceSpec, value_is_id=True, alti_key="accepter_vpc"

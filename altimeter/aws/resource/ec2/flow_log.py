@@ -14,7 +14,8 @@ from altimeter.core.graph.schema import Schema
 class FlowLogResourceSpec(EC2ResourceSpec):
     """Resource for VPC Flow Logs"""
 
-    type_name = "flow-log"
+    # type_name = "flow-log"
+    type_name = "flow_log"
     schema = Schema(
         ScalarField("CreationTime"),
         ScalarField("DeliverLogsErrorMessage", optional=True),

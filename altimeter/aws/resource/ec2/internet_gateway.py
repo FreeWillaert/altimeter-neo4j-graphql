@@ -17,7 +17,8 @@ from altimeter.core.graph.schema import Schema
 class InternetGatewayResourceSpec(EC2ResourceSpec):
     """Resource for InternetGateways"""
 
-    type_name = "internet-gateway"
+    # type_name = "internet-gateway"
+    type_name = "internet_gateway"
     schema = Schema(
         ScalarField("OwnerId"),
         ListField(

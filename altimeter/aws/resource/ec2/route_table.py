@@ -16,7 +16,8 @@ from altimeter.core.graph.field.scalar_field import ScalarField
 class EC2RouteTableResourceSpec(EC2ResourceSpec):
     """Resource for Route Tables"""
 
-    type_name = "route-table"
+    # type_name = "route-table"
+    type_name = "route_table"
 
     schema = Schema(
         ScalarField("RouteTableId"),

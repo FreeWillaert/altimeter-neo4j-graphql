@@ -15,7 +15,8 @@ from altimeter.core.graph.schema import Schema
 class VpcEndpointResourceSpec(EC2ResourceSpec):
     """Resource for VPC Endpoints"""
 
-    type_name = "vpc-endpoint"
+    # type_name = "vpc-endpoint"
+    type_name = "vpc_endpoint"
     schema = Schema(
         ScalarField("VpcEndpointType"),
         ScalarField("ServiceName"),

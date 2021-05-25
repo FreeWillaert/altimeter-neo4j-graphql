@@ -16,7 +16,8 @@ from altimeter.core.graph.schema import Schema
 class EC2NetworkInterfaceResourceSpec(EC2ResourceSpec):
     """Resource for EC2NetworkInterfaces"""
 
-    type_name = "network-interface"
+    # type_name = "network-interface"
+    type_name = "network_interface"
     schema = Schema(
         AnonymousDictField(
             "Association",
