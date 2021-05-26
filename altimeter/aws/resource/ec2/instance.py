@@ -6,6 +6,7 @@ from botocore.client import BaseClient
 from altimeter.aws.resource.resource_spec import ListFromAWSResult
 from altimeter.aws.resource.ec2 import EC2ResourceSpec
 from altimeter.aws.resource.ec2.image import EC2ImageResourceSpec
+from altimeter.aws.resource.ec2.network_interface import EC2NetworkInterfaceResourceSpec
 from altimeter.aws.resource.ec2.security_group import SecurityGroupResourceSpec
 from altimeter.aws.resource.ec2.subnet import SubnetResourceSpec
 from altimeter.aws.resource.ec2.vpc import VPCResourceSpec
@@ -54,6 +55,10 @@ class EC2InstanceResourceSpec(EC2ResourceSpec):
             optional=True,
         ),
         TagsField(),
+        AnonymousListField(
+            "NetworkInterfaces",
+            AnonymousEmbeddedDictField(ResourceLinkField("NetworkInterfaceId", EC2NetworkInterfaceResourceSpec)),
+        ),        
     )
 
     @classmethod
