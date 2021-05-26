@@ -22,6 +22,23 @@ const resolvers = {
         // },
     },
     Query: {
+        internet_exposed_ec2__instances: async (parent, args, context, info) => {
+            // TODO: Should merge rather than override
+            args.filter = args.filter || {}
+            args.filter = _.merge(args.filter, {
+                security_groups_some: {
+                    ingress_rules_some: {
+                        ip_ranges_some: {
+                            alti__cidr_ip_starts_with: '0.0.0.0'
+                        }
+                    }
+                }
+            })
+
+            const all_instances = await neo4jgraphql(parent, args, context,info)
+
+            return all_instances
+        },
         sample_my_resources: async (parent, args, context, info) => {
             let session
             try { 
