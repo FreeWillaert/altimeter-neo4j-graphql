@@ -22,36 +22,51 @@ const resolvers = {
         // },
     },
     Query: {
-        internet_exposed_ec2__instances: async (parent, args, context, info) => {
+        internet_exposed_ec2_instances: async (parent, args, context, info) => {
             // TODO: Should merge rather than override
             args.filter = args.filter || {}
             args.filter = _.merge(args.filter, {
-                security_groups_some: {
-                    ingress_rules_some: {
-                        ip_ranges_some: {
-                            alti__cidr_ip_starts_with: '0.0.0.0'
+                OR: [
+                    {
+                        security_groups_some: {
+                            ingress_rules_some: {
+                                ip_ranges_some: {
+                                    alti__cidr_ip_starts_with: '0.0.0.0'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        network_interfaces_some: {
+                            security_groups_some: {
+                                ingress_rules_some: {
+                                    ip_ranges_some: {
+                                        alti__cidr_ip_starts_with: "0.0.0.0"
+                                    }
+                                }
+                            }
                         }
                     }
-                }
+                ]
             })
 
-            const all_instances = await neo4jgraphql(parent, args, context,info)
+            const all_instances = await neo4jgraphql(parent, args, context, info)
 
             return all_instances
         },
         sample_my_resources: async (parent, args, context, info) => {
             let session
-            try { 
+            try {
                 session = driver.session()
                 const result = await session.run('MATCH (n:Resource) RETURN n')
-                const fields = result.records.map(record => _.merge({id: +record.get(0).identity}, record.get(0).properties))
+                const fields = result.records.map(record => _.merge({ id: +record.get(0).identity }, record.get(0).properties))
                 return fields
             } finally {
-                if(session) await session.close()
+                if (session) await session.close()
             }
         },
         sample_regions_with_ec2: async (parent, args, context, info) => {
-            const allRegions = await neo4jgraphql(parent, args, context,info)
+            const allRegions = await neo4jgraphql(parent, args, context, info)
             const nonEmptyRegions = allRegions.filter(f => f.ec2__instances.length > 0)
 
             return nonEmptyRegions
@@ -61,9 +76,9 @@ const resolvers = {
 
 const schema = makeAugmentedSchema({ typeDefs, resolvers })
 
-const server = new ApolloServer({ 
-    schema, 
-    context: { driver } 
+const server = new ApolloServer({
+    schema,
+    context: { driver }
 });
 
 server.listen(4000).then(({ url }) => {

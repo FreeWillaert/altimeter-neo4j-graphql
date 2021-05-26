@@ -109,7 +109,7 @@
     }
 
     type Query {
-        internet_exposed_ec2__instances: [ec2__instance]!
+        internet_exposed_ec2_instances: [ec2__instance]!
         sample_my_resources: [Resource]!
         sample_regions_with_ec2: [aws__region]!
     }
