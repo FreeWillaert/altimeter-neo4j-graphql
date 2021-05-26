@@ -65,6 +65,24 @@
         ingress_rules: [alti__ingress_rule] @relation(name: "alti__ingress_rule", direction: OUT)
     }
 
+    type elb__loadbalancer { #implements IResource {
+        # id: Int! # Not sure why but id remains null
+        uri: String!
+
+        alti__dns_name: String!
+        alti__created_time: String!
+        alti__load_balancer_name: String!
+        alti__scheme: String!
+        alti__vpc_id: String
+        # Subnets
+        alti__type: String!
+        security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+        alti__ip_address_type: String!
+        alti__access_logs_enabled: String! # TODO: Map to Boolean
+        # AccessLogsS3Bucket
+        # AccessLogsS3Prefix
+    }
+
     type elbv2__loadbalancer { #implements IResource {
         # id: Int! # Not sure why but id remains null
         uri: String!
@@ -73,7 +91,7 @@
         alti__created_time: String!
         alti__load_balancer_name: String!
         alti__scheme: String!
-        # VpcId
+        alti__vpc_id: String
         # State
         alti__type: String!
         # AvailabilityZones
@@ -126,6 +144,7 @@
 
     type Query {
         internet_exposed_ec2_instances: [ec2__instance]!
+        internet_exposed_elb_loadbalancers: [elb__loadbalancer]!
         internet_exposed_elbv2_loadbalancers: [elbv2__loadbalancer]!
         sample_my_resources: [Resource]!
         sample_regions_with_ec2: [aws__region]!
