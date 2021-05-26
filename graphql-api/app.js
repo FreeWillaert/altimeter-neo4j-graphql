@@ -23,7 +23,6 @@ const resolvers = {
     },
     Query: {
         internet_exposed_ec2_instances: async (parent, args, context, info) => {
-            // TODO: Should merge rather than override
             args.filter = args.filter || {}
             args.filter = _.merge(args.filter, {
                 OR: [
@@ -50,9 +49,21 @@ const resolvers = {
                 ]
             })
 
-            const all_instances = await neo4jgraphql(parent, args, context, info)
+            return await neo4jgraphql(parent, args, context, info)
+        },
+        internet_exposed_elbv2_loadbalancers: async (parent, args, context, info) => {
+            args.filter = args.filter || {}
+            args.filter = _.merge(args.filter, {
+                security_groups_some: {
+                    ingress_rules_some: {
+                        ip_ranges_some: {
+                            alti__cidr_ip_starts_with: '0.0.0.0'
+                        }
+                    }
+                }
+            })
 
-            return all_instances
+            return await neo4jgraphql(parent, args, context, info)
         },
         sample_my_resources: async (parent, args, context, info) => {
             let session
