@@ -23,8 +23,7 @@ const resolvers = {
     },
     Query: {
         internet_exposed_ec2_instances: async (parent, args, context, info) => {
-            args.filter = args.filter || {}
-            args.filter = _.merge(args.filter, {
+            const internet_exposed_filter = {
                 OR: [
                     {
                         security_groups_some: {
@@ -47,21 +46,30 @@ const resolvers = {
                         }
                     }
                 ]
-            })
+            }
 
+            args.filter = (args.filter) ? { AND: [ args.filter, internet_exposed_filter]} : internet_exposed_filter
+            
             return await neo4jgraphql(parent, args, context, info)
         },
         internet_exposed_elbv2_loadbalancers: async (parent, args, context, info) => {
-            args.filter = args.filter || {}
-            args.filter = _.merge(args.filter, {
-                security_groups_some: {
-                    ingress_rules_some: {
-                        ip_ranges_some: {
-                            alti__cidr_ip_starts_with: '0.0.0.0'
+
+            const internet_exposed_filter = {
+                AND: [
+                    { alti__scheme: "internet-facing" },
+                    {
+                        security_groups_some: {
+                            ingress_rules_some: {
+                                ip_ranges_some: {
+                                    alti__cidr_ip_starts_with: '0.0.0.0'
+                                }
+                            }
                         }
                     }
-                }
-            })
+                ]
+            }
+
+            args.filter = (args.filter) ? { AND: [ args.filter, internet_exposed_filter]} : internet_exposed_filter
 
             return await neo4jgraphql(parent, args, context, info)
         },
