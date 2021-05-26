@@ -40,6 +40,24 @@
         # dummy: String! @ignore
     }
 
+    type ec2__network_interface implements IResource {
+        id: Int!
+        uri: String!
+
+        # Aassociation ?
+        alti__description: String!
+        alti__interface_type: String!
+        alti__mac_address: String!
+        alti__private_dns_name: String
+        alti__private_ip_address: String
+        alti__status: String!
+        # SubnetId 
+        # VpcId
+
+        # (Security) Groups??
+    }
+
+
     type ec2__security_group implements IResource {
         id: Int!
         uri: String!
