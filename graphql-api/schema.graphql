@@ -81,6 +81,7 @@
         alti__access_logs_enabled: String! # TODO: Map to Boolean
         # AccessLogsS3Bucket
         # AccessLogsS3Prefix
+        instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT)
     }
 
     type elbv2__loadbalancer { #implements IResource {
