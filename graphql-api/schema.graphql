@@ -103,6 +103,32 @@
         # AccessLogsS3Prefix
     }
 
+    type s3__bucket implements IResource {
+        id: Int!
+        uri: String!
+
+        alti__name: String!
+        alti__creation_date: String!
+        server_side_default_encryption_rules: [alti__server_side_default_encryption_rule] @relation(name: "alti__server_side_default_encryption_rule", direction: OUT)
+        tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+    }
+
+    type alti__server_side_default_encryption_rule implements IResource {
+        id: Int!
+        uri: String!
+
+        alti__algorithm: String!
+        # keys doesn't seem right yet
+        # keys: [kms__key] @relation(name: "alti__key", direction: OUT)
+    }
+
+    # type kms__key implements IResource {
+    #     id: Int!
+    #     uri: String!
+
+    #     alti__key_id: String!
+    # }
+
     type alti__ingress_rule implements IResource {
         id: Int!
         uri: String!
