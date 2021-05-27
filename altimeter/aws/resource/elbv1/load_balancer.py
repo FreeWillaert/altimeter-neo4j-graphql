@@ -4,6 +4,7 @@ from typing import Dict, Type
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
+from altimeter.aws.resource.ec2.instance import EC2InstanceResourceSpec
 from altimeter.aws.resource.ec2.security_group import SecurityGroupResourceSpec
 from altimeter.aws.resource.ec2.subnet import SubnetResourceSpec
 from altimeter.aws.resource.ec2.vpc import VPCResourceSpec
@@ -16,7 +17,8 @@ from altimeter.core.graph.field.resource_link_field import (
     ResourceLinkField,
     TransientResourceLinkField,
 )
-from altimeter.core.graph.field.list_field import ListField
+from altimeter.core.graph.field.dict_field import AnonymousEmbeddedDictField
+from altimeter.core.graph.field.list_field import AnonymousListField, ListField
 from altimeter.core.graph.field.scalar_field import ScalarField
 from altimeter.core.graph.schema import Schema
 
@@ -44,6 +46,10 @@ class ClassicLoadBalancerResourceSpec(ELBV1ResourceSpec):
             optional=True,
         ),
         ScalarField("AccessLogsS3Prefix", optional=True),
+        AnonymousListField(
+            "Instances",
+            AnonymousEmbeddedDictField(ResourceLinkField("InstanceId", EC2InstanceResourceSpec)),
+        )
     )
 
     @classmethod
