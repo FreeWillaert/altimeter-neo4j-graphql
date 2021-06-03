@@ -8,6 +8,14 @@
         uri: String!
     }
 
+    type aws__account { #} implements IResource {
+        # id: Int!
+        uri: String!
+
+        alti__id: String!
+        alti__account_id: String!
+    }
+
     type ec2__instance implements IResource {
         # ImageId
         # Placement
@@ -101,6 +109,19 @@
         alti__access_logs_enabled: String! # TODO: Map to Boolean
         # AccessLogsS3Bucket
         # AccessLogsS3Prefix
+    }
+
+    type lambda__function { # implements IResource {
+        # id: Int!
+        uri: String!
+
+        alti__id: String!
+        alti__function_name: String!
+        alti__runtime: String!
+
+        account: aws__account @relation(name: "alti__account", direction: OUT)
+
+        # VpcConfig
     }
 
     type s3__bucket implements IResource {
