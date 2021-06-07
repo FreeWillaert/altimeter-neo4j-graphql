@@ -69,3 +69,6 @@ postgres_docker_container.id
 
 # a place for custom config files etc. that shouldn't be checked in
 custom
+
+# temporary files
+tmp
