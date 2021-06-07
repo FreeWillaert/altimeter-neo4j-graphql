@@ -1,7 +1,12 @@
 
-# Welcome to your CDK Python project!
+# altimeter-scanner-access role
+Attach policies:
+* SecurityAudit
+* job-function/ViewOnlyAccess
+* AWSSupportAccess
 
-This is a blank project for Python development with CDK.
+
+# Welcome to this CDK Python project!
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
