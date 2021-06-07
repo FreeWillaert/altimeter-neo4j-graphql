@@ -5,6 +5,7 @@ import os.path
 from aws_cdk import core as cdk
 from aws_cdk.aws_ec2 import SubnetConfiguration, SubnetType, Vpc
 from aws_cdk.aws_ecs import AwsLogDriver, Cluster, ContainerImage, FargateTaskDefinition, TaskDefinition
+from aws_cdk.aws_iam import AccountPrincipal, ManagedPolicy, Role, ServicePrincipal
 from aws_cdk.aws_ecr_assets import DockerImageAsset
 from aws_cdk.aws_iam import PolicyStatement
 from aws_cdk.aws_logs import RetentionDays
@@ -31,20 +32,42 @@ class ScannerStack(cdk.Stack):
             ]
         )
 
-        bucket = Bucket(self, "s3-bucket-altimeter", 
+        Bucket(self, "s3-bucket-altimeter", 
             bucket_name=config["s3_bucket"],
             encryption=BucketEncryption.S3_MANAGED,
             block_public_access=BlockPublicAccess.BLOCK_ALL
         )
 
-        cluster = Cluster(self, "ecs-cluster-altimeter", 
+        Cluster(self, "ecs-cluster-altimeter", 
             cluster_name="Altimeter",
             vpc=vpc               
         )
 
-        task_definition = FargateTaskDefinition(self, "ecs-fgtd-altimeter")
+        # execution_role = Role(self, "iam-role-altimeter-execution-role",
+        #     assumed_by=ServicePrincipal("ecs-tasks.amazonaws.com"),
+        #     # It appears that within the account where the scanner is running, the execution role is (partially) used for scanning resources (rather than the altimeter-scanner-access role).      
+        #     managed_policies=[
+        #         ManagedPolicy.from_aws_managed_policy_name('SecurityAudit'),
+        #         ManagedPolicy.from_aws_managed_policy_name('job-function/ViewOnlyAccess')
+        #     ]
+        # )
 
-        docker_path = os.path.join(os.path.curdir,"..") ## TODO: Is this the right path?
+        task_role = Role(self, "iam-role-altimeter-task-role",
+            assumed_by=ServicePrincipal("ecs-tasks.amazonaws.com"),
+            # It appears that within the account where the scanner is running, the task role is (partially) used for scanning resources (rather than the altimeter-scanner-access role).      
+            managed_policies=[
+                ManagedPolicy.from_aws_managed_policy_name('SecurityAudit'),
+                ManagedPolicy.from_aws_managed_policy_name('job-function/ViewOnlyAccess')
+            ]
+        )
+
+        task_definition = FargateTaskDefinition(self, "ecs-fgtd-altimeter",
+            # execution_role=execution_role,
+            task_role=task_role,
+            memory_limit_mib=1024
+        )
+
+        docker_path = os.path.join(os.path.curdir,"..")
 
         image_asset = DockerImageAsset(self, 'ecr-assets-dia-altimeter', 
             directory=docker_path,
@@ -53,7 +76,7 @@ class ScannerStack(cdk.Stack):
 
         task_definition.add_container("ecs-container-altimeter",            
             image= ContainerImage.from_docker_image_asset(image_asset),
-            memory_limit_mib=512,
+            memory_limit_mib=1024,
             cpu=256,
             environment= {
                 "CONFIG_PATH": config["altimeter_config_path"],
@@ -64,6 +87,8 @@ class ScannerStack(cdk.Stack):
                 log_retention= RetentionDays.TWO_WEEKS
             )
         )
+
+        # task_definition.add_to_execution_role_policy()
 
         task_definition.add_to_task_role_policy(PolicyStatement(
             resources=["arn:aws:iam::*:role/"+config["account_execution_role"]],
@@ -83,6 +108,7 @@ class ScannerStack(cdk.Stack):
                 "s3:Abort*",
                 "s3:PutObjectTagging"]
         ))
+
 
 
         # Grant the ability to record the stdout to CloudWatch Logs
