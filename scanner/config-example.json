@@ -1,0 +1,5 @@
+{
+    "altimeter_config_path": "./conf/multi_account.toml",
+    "s3_bucket": "my-bucket",
+    "account_execution_role": "altimeter-scanner-access"
+}

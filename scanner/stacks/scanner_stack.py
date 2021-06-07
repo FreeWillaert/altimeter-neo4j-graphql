@@ -1,15 +1,103 @@
+import json
+from os import name
+import os.path
+
 from aws_cdk import core as cdk
+from aws_cdk.aws_ec2 import SubnetConfiguration, SubnetType, Vpc
+from aws_cdk.aws_ecs import AwsLogDriver, Cluster, ContainerImage, FargateTaskDefinition, TaskDefinition
+from aws_cdk.aws_ecr_assets import DockerImageAsset
+from aws_cdk.aws_iam import PolicyStatement
+from aws_cdk.aws_logs import RetentionDays
+from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption
 
-# For consistency with other languages, `cdk` is the preferred import name for
-# the CDK's core module.  The following line also imports it as `core` for use
-# with examples from the CDK Developer's Guide, which are in the process of
-# being updated to use `cdk`.  You may delete this import if you don't need it.
-from aws_cdk import core
-
+CONFIG_FILENAME = "config.json"
 
 class ScannerStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        config = self.read_config()
+
+
+        # TODO: See if this can also run in a private subnet...?
+        vpc = Vpc(self, "ec2-vpc-altimeter",
+            max_azs=1,
+            subnet_configuration=[
+                SubnetConfiguration(
+                    name="Public", 
+                    subnet_type=SubnetType.PUBLIC
+                )
+            ]
+        )
+
+        bucket = Bucket(self, "s3-bucket-altimeter", 
+            bucket_name=config["s3_bucket"],
+            encryption=BucketEncryption.S3_MANAGED,
+            block_public_access=BlockPublicAccess.BLOCK_ALL
+        )
+
+        cluster = Cluster(self, "ecs-cluster-altimeter", 
+            cluster_name="Altimeter",
+            vpc=vpc               
+        )
+
+        task_definition = FargateTaskDefinition(self, "ecs-fgtd-altimeter")
+
+        docker_path = os.path.join(os.path.curdir,"..") ## TODO: Is this the right path?
+
+        image_asset = DockerImageAsset(self, 'ecr-assets-dia-altimeter', 
+            directory=docker_path,
+            file="scanner.Dockerfile"
+        )            
+
+        task_definition.add_container("ecs-container-altimeter",            
+            image= ContainerImage.from_docker_image_asset(image_asset),
+            memory_limit_mib=512,
+            cpu=256,
+            environment= {
+                "CONFIG_PATH": config["altimeter_config_path"],
+                "S3_BUCKET": config["s3_bucket"]
+            },
+            logging= AwsLogDriver(
+                stream_prefix= 'altimeter',
+                log_retention= RetentionDays.TWO_WEEKS
+            )
+        )
+
+        task_definition.add_to_task_role_policy(PolicyStatement(
+            resources=["arn:aws:iam::*:role/"+config["account_execution_role"]],
+            actions=['sts:AssumeRole']
+        ))
+
+        task_definition.add_to_task_role_policy(PolicyStatement(
+            resources=[
+                "arn:aws:s3:::"+config["s3_bucket"],
+                "arn:aws:s3:::"+config["s3_bucket"]+"/*"
+            ],
+            actions=["s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:Abort*",
+                "s3:PutObjectTagging"]
+        ))
+
+
+        # Grant the ability to record the stdout to CloudWatch Logs
+        # TODO: Refine?
+        task_definition.add_to_task_role_policy(PolicyStatement(
+            resources=["*"],
+            actions=['logs:*']
+        ))
+
+
+    def read_config(self):
+        if not os.path.isfile(CONFIG_FILENAME):
+            print(f"Please provide a {CONFIG_FILENAME} file.")
+        else:
+            with open(CONFIG_FILENAME, "r") as f:
+                config = json.loads(f.read())
+                return config
+        
