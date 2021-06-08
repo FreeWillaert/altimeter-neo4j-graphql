@@ -5,6 +5,11 @@ Attach policies:
 * job-function/ViewOnlyAccess
 * AWSSupportAccess
 
+# manual run
+```
+aws events put-events --entries '[{"Source":"altimeter", "DetailType": "start", "Detail":"{}"}]'
+```
+
 
 # Welcome to this CDK Python project!
 

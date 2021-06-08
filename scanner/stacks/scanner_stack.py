@@ -3,10 +3,12 @@ from os import name
 import os.path
 
 from aws_cdk import core as cdk
-from aws_cdk.aws_ec2 import SubnetConfiguration, SubnetType, Vpc
+from aws_cdk.aws_ec2 import SubnetConfiguration, SubnetSelection, SubnetType, Vpc
 from aws_cdk.aws_ecs import AwsLogDriver, Cluster, ContainerImage, FargateTaskDefinition, TaskDefinition
 from aws_cdk.aws_iam import AccountPrincipal, ManagedPolicy, Role, ServicePrincipal
 from aws_cdk.aws_ecr_assets import DockerImageAsset
+from aws_cdk.aws_events import EventPattern, Rule, Schedule
+from aws_cdk.aws_events_targets import EcsTask
 from aws_cdk.aws_iam import PolicyStatement
 from aws_cdk.aws_logs import RetentionDays
 from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption
@@ -38,7 +40,7 @@ class ScannerStack(cdk.Stack):
             block_public_access=BlockPublicAccess.BLOCK_ALL
         )
 
-        Cluster(self, "ecs-cluster-altimeter", 
+        cluster = Cluster(self, "ecs-cluster-altimeter", 
             cluster_name="Altimeter",
             vpc=vpc               
         )
@@ -109,14 +111,36 @@ class ScannerStack(cdk.Stack):
                 "s3:PutObjectTagging"]
         ))
 
-
-
         # Grant the ability to record the stdout to CloudWatch Logs
         # TODO: Refine?
         task_definition.add_to_task_role_policy(PolicyStatement(
             resources=["*"],
             actions=['logs:*']
         ))
+
+        # Trigger task every 24 hours
+        Rule(self, "events-rule-altimeter-daily-scan",
+            rule_name="evrule--altimeter-daily-scan",
+            schedule=Schedule.cron(hour="0"),
+            description="Daily altimeter scan",
+            targets=[EcsTask(
+                task_definition=task_definition,
+                cluster=cluster,
+                subnet_selection=SubnetSelection(subnet_type=SubnetType.PUBLIC)
+            )]
+        )
+
+        # Trigger task manually via event
+        Rule(self, "events-rule-altimeter-manual-scan",
+            rule_name="evrule--altimeter-manual-scan",
+            event_pattern=EventPattern(source=['altimeter']), 
+            description="Manual altimeter scan",
+            targets=[EcsTask(
+                task_definition=task_definition,
+                cluster=cluster,
+                subnet_selection=SubnetSelection(subnet_type=SubnetType.PUBLIC)
+            )]
+        )        
 
 
     def read_config(self):
