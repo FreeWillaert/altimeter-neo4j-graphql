@@ -33,14 +33,14 @@ def lambda_handler(event, context):
 
         logger.info(prepared_file_content)
         
-        prepared_file_key = key.replace('/raw','/prepared')
+        prepared_file_key = key.replace('raw/','prepared/')
 
-        s3.put_object(Body=prepared_file_content, Bucket=bucket, Key=key)
+        s3.put_object(Body=prepared_file_content, Bucket=bucket, Key=prepared_file_key)
 
         logger.info("object put")
 
         return "OK"
     except Exception as e:
         logger.error(e)
-        print('Error getting object {} from bucket {}. Make sure the object exists and your bucket is in the same region as this function.'.format(key, bucket))
+        logger.error('Error getting object {} from bucket {}. Make sure the object exists and your bucket is in the same region as this function.'.format(key, bucket))
         raise e
