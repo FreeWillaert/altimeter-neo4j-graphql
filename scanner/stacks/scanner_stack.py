@@ -1,38 +1,23 @@
-import json
-from os import name
 import os.path
 
 from aws_cdk import core as cdk
-from aws_cdk.aws_ec2 import SubnetConfiguration, SubnetSelection, SubnetType, Vpc
+from aws_cdk.aws_ec2 import IVpc, SubnetSelection, SubnetType
 from aws_cdk.aws_ecs import AwsLogDriver, Cluster, ContainerImage, FargateTaskDefinition, TaskDefinition
-from aws_cdk.aws_iam import AccountPrincipal, ManagedPolicy, Role, ServicePrincipal
+from aws_cdk.aws_iam import ManagedPolicy, PolicyStatement, Role, ServicePrincipal
 from aws_cdk.aws_ecr_assets import DockerImageAsset
 from aws_cdk.aws_events import EventPattern, Rule, Schedule
 from aws_cdk.aws_events_targets import EcsTask
-from aws_cdk.aws_iam import PolicyStatement
 from aws_cdk.aws_logs import RetentionDays
 from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption
 
-CONFIG_FILENAME = "config.json"
+from .config import read_config
 
 class ScannerStack(cdk.Stack):
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: cdk.Construct, construct_id: str, vpc: IVpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        config = self.read_config()
-
-
-        # TODO: See if this can also run in a private subnet...?
-        vpc = Vpc(self, "ec2-vpc-altimeter",
-            max_azs=1,
-            subnet_configuration=[
-                SubnetConfiguration(
-                    name="Public", 
-                    subnet_type=SubnetType.PUBLIC
-                )
-            ]
-        )
+        config = read_config()
 
         Bucket(self, "s3-bucket-altimeter", 
             bucket_name=config["s3_bucket"],
@@ -44,15 +29,6 @@ class ScannerStack(cdk.Stack):
             cluster_name="Altimeter",
             vpc=vpc               
         )
-
-        # execution_role = Role(self, "iam-role-altimeter-execution-role",
-        #     assumed_by=ServicePrincipal("ecs-tasks.amazonaws.com"),
-        #     # It appears that within the account where the scanner is running, the execution role is (partially) used for scanning resources (rather than the altimeter-scanner-access role).      
-        #     managed_policies=[
-        #         ManagedPolicy.from_aws_managed_policy_name('SecurityAudit'),
-        #         ManagedPolicy.from_aws_managed_policy_name('job-function/ViewOnlyAccess')
-        #     ]
-        # )
 
         task_role = Role(self, "iam-role-altimeter-task-role",
             assumed_by=ServicePrincipal("ecs-tasks.amazonaws.com"),
@@ -90,8 +66,6 @@ class ScannerStack(cdk.Stack):
             )
         )
 
-        # task_definition.add_to_execution_role_policy()
-
         task_definition.add_to_task_role_policy(PolicyStatement(
             resources=["arn:aws:iam::*:role/"+config["account_execution_role"]],
             actions=['sts:AssumeRole']
@@ -126,7 +100,7 @@ class ScannerStack(cdk.Stack):
             targets=[EcsTask(
                 task_definition=task_definition,
                 cluster=cluster,
-                subnet_selection=SubnetSelection(subnet_type=SubnetType.PUBLIC)
+                subnet_selection=SubnetSelection(subnet_type=SubnetType.PRIVATE)
             )]
         )
 
@@ -143,11 +117,5 @@ class ScannerStack(cdk.Stack):
         )        
 
 
-    def read_config(self):
-        if not os.path.isfile(CONFIG_FILENAME):
-            print(f"Please provide a {CONFIG_FILENAME} file.")
-        else:
-            with open(CONFIG_FILENAME, "r") as f:
-                config = json.loads(f.read())
-                return config
+
         

@@ -3,12 +3,15 @@ import os
 
 from aws_cdk import core as cdk
 
-
+from stacks.vpc_stack import VpcStack
 from stacks.scanner_stack import ScannerStack
+from stacks.neo4j_stack import Neo4jStack
 
 
 app = cdk.App()
-ScannerStack(app, "ScannerStack",
+vpc_stack = VpcStack(app, "AltimeterVpcStack")
+neo4j_stack = Neo4jStack(app, "AltimeterNeo4jStack", vpc_stack.vpc)
+ScannerStack(app, "AltimeterScannerStack", vpc_stack.vpc,
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
