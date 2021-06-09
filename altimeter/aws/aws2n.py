@@ -74,7 +74,10 @@ def aws2n(scan_id: str, config: AWSConfig, muxer: AWSScanMuxer, load_neptune: bo
         artifact_reader=artifact_reader,
     )
     json_path = scan_manifest.master_artifact
-    rdf_path = artifact_writer.write_graph_set(name="master", graph_set=graph_set, compression=GZIP)
+
+    compression = GZIP if config.artifact_compressed else None
+    rdf_path = artifact_writer.write_graph_set(name="master", graph_set=graph_set, compression=compression)
+
     graph_metadata = None
     if load_neptune:
         if config.neptune is None:

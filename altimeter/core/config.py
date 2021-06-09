@@ -53,6 +53,7 @@ class Config(BaseImmutableModel):
     """Config class to be overridden by graphers"""
 
     artifact_path: str
+    artifact_compressed: bool = True
     pruner_max_age_min: int
     graph_name: str
     neptune: Optional[NeptuneConfig] = None
