@@ -42,30 +42,6 @@ echo "dbms.security.procedures.unrestricted=n10s.*" >> /etc/neo4j/neo4j.conf
  
 /bin/systemctl start neo4j.service 2>&1 | tee -a $LOGFILE
 
-# TODO: Why doesn't 127.0.0.1 work with cypher-shell (not possible to connect to 127.0.0.1 on port 7687)
-# TODO: Some or all of these command may need to be executed again after a db clean and re-import. Check out how to handle this.
-
-# Prepare database for RDF import
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.graphconfig.init({handleVocabUris: 'SHORTEN',handleMultival: 'OVERWRITE',handleRDFTypes: 'LABELS'})" 2>&1 | tee -a $LOGFILE
-
-# Prepare RDF namespace prefixes
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('dynamodb', 'alti:aws:dynamodb:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('support', 'alti:aws:support:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('rds', 'alti:aws:rds:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('guardduty', 'alti:aws:guardduty:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('lambda', 'alti:aws:lambda:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('s3', 'alti:aws:s3:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('kms', 'alti:aws:kms:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('cloudtrail', 'alti:aws:cloudtrail:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('elb', 'alti:aws:elb:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('elbv2', 'alti:aws:elbv2:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('events', 'alti:aws:events:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('iam', 'alti:aws:iam:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('ec2', 'alti:aws:ec2:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('alti', 'alti:');" 2>&1 | tee -a $LOGFILE
-cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('aws', 'alti:aws:');" 2>&1 | tee -a $LOGFILE
-
 # Install the CloudWatch Agent
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
 sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
@@ -121,3 +97,27 @@ while true; do
     echo `date` 'Waiting for neo4j to come up' 2>&1 | tee -a $LOGFILE
     sleep 1
 done
+
+# TODO: Why doesn't 127.0.0.1 work with cypher-shell (not possible to connect to 127.0.0.1 on port 7687)
+# TODO: Some or all of these command may need to be executed again after a db clean and re-import. Check out how to handle this.
+
+# Prepare database for RDF import
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.graphconfig.init({handleVocabUris: 'SHORTEN',handleMultival: 'OVERWRITE',handleRDFTypes: 'LABELS'})" 2>&1 | tee -a $LOGFILE
+
+# Prepare RDF namespace prefixes
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('dynamodb', 'alti:aws:dynamodb:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('support', 'alti:aws:support:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('rds', 'alti:aws:rds:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('guardduty', 'alti:aws:guardduty:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('lambda', 'alti:aws:lambda:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('s3', 'alti:aws:s3:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('kms', 'alti:aws:kms:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('cloudtrail', 'alti:aws:cloudtrail:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('elb', 'alti:aws:elb:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('elbv2', 'alti:aws:elbv2:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('events', 'alti:aws:events:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('iam', 'alti:aws:iam:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('ec2', 'alti:aws:ec2:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('alti', 'alti:');" 2>&1 | tee -a $LOGFILE
+cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CALL n10s.nsprefixes.add('aws', 'alti:aws:');" 2>&1 | tee -a $LOGFILE
