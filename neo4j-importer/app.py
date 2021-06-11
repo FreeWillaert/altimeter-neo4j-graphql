@@ -15,11 +15,6 @@ logger.info('Loading function')
 s3_client = boto3.client('s3')
 sm_client = boto3.client('secretsmanager')
 
-
-# With boto3, the S3 urls are virtual by default, which then require internet access to be resolved to region specific urls. This causes the hanging of the Lambda function until timeout.
-#To resolve this requires use of a Config object when creating the client, which tells boto3 to create path based S3 urls instead
-# s3 = boto3.client('s3', 'eu-west-1', config=botocore.config.Config(s3={'addressing_style':'path'}))
-
 def lambda_handler(event, context):
     logger.info("Received event: " + json.dumps(event, indent=2))
 
@@ -49,7 +44,7 @@ def lambda_handler(event, context):
 
         logger.info("prepared file written")
 
-        rdf_presigned_url = s3.generate_presigned_url(
+        rdf_presigned_url = s3_client.generate_presigned_url(
             ClientMethod='get_object', 
             Params={'Bucket': bucket, 'Key': prepared_file_key},
             ExpiresIn=3600

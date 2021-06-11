@@ -99,7 +99,6 @@ while true; do
 done
 
 # TODO: Why doesn't 127.0.0.1 work with cypher-shell (not possible to connect to 127.0.0.1 on port 7687)
-# TODO: Some or all of these command may need to be executed again after a db clean and re-import. Check out how to handle this.
 
 # Prepare database for RDF import
 cypher-shell -u neo4j -p $databaseNeo4jPassword -a $EC2_LOCAL_IP "CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE" 2>&1 | tee -a $LOGFILE

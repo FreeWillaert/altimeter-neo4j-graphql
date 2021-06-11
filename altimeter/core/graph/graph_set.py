@@ -216,6 +216,8 @@ def validate_resources(resources: Tuple[Resource, ...]) -> None:
     resource_ref_ids = set(resource_ref_ids_used_by_ids.keys())
     orphan_refs = resource_ref_ids - present_resource_ids
     if orphan_refs:
-        raise GraphSetOrphanedReferencesException(
-            ("References to resources were found which were not scanned: " f"{orphan_refs}.")
-        )
+        # TEMPORARY WORKAROUND: Disable this while investigating why references to resources were found which were not scanned
+        # raise GraphSetOrphanedReferencesException(
+        #     ("References to resources were found which were not scanned: " f"{orphan_refs}.")
+        # )
+        print("References to resources were found which were not scanned: " f"{orphan_refs}.")

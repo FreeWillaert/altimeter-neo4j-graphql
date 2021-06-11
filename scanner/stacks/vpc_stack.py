@@ -8,7 +8,7 @@ class VpcStack(cdk.Stack):
 
     vpc: IVpc
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: cdk.Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         self.vpc = Vpc(self, "ec2-vpc-altimeter",

@@ -1,27 +1,27 @@
 import os.path
 
 from aws_cdk import core as cdk
-from aws_cdk.aws_ec2 import IVpc, SubnetSelection, SubnetType
+from aws_cdk.aws_ec2 import IVpc, SubnetSelection, SubnetType, IInstance
 from aws_cdk.aws_ecs import AwsLogDriver, Cluster, ContainerImage, FargateTaskDefinition, TaskDefinition
 from aws_cdk.aws_iam import ManagedPolicy, PolicyStatement, Role, ServicePrincipal
 from aws_cdk.aws_ecr_assets import DockerImageAsset
 from aws_cdk.aws_events import EventPattern, Rule, Schedule
 from aws_cdk.aws_events_targets import EcsTask
 from aws_cdk.aws_logs import RetentionDays
-from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption, IBucket
+from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption, EventType
 
-from .config import read_config
+from aws_cdk.aws_lambda import Runtime, Function, IFunction
+from aws_cdk.aws_lambda_event_sources import S3EventSource
+from aws_cdk.aws_lambda_python import PythonFunction
+from aws_cdk.aws_secretsmanager import ISecret
+
 
 class ScannerStack(cdk.Stack):
 
-    bucket: IBucket
-
-    def __init__(self, scope: cdk.Construct, construct_id: str, vpc: IVpc, **kwargs) -> None:
+    def __init__(self, scope: cdk.Construct, construct_id: str, config, vpc: IVpc, instance: IInstance, neo4j_user_secret: ISecret, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        config = read_config()
-
-        self.bucket = Bucket(self, "s3-bucket-altimeter", 
+        bucket = Bucket(self, "s3-bucket-altimeter", 
             bucket_name=config["s3_bucket"],
             encryption=BucketEncryption.S3_MANAGED,
             block_public_access=BlockPublicAccess.BLOCK_ALL
@@ -88,7 +88,7 @@ class ScannerStack(cdk.Stack):
         ))
 
         # Grant the ability to record the stdout to CloudWatch Logs
-        # TODO: Refine?
+        # TODO: Refine
         task_definition.add_to_task_role_policy(PolicyStatement(
             resources=["*"],
             actions=['logs:*']
@@ -119,5 +119,31 @@ class ScannerStack(cdk.Stack):
         )        
 
 
+        # Don't put Neo4j Importer lambda in a separate stack since it causes a circular reference with the S3 event source, and using an imported bucket as event source is not possible (you need a Bucket, not an IBucket)
 
-        
+
+        neo4j_importer_function = PythonFunction(self, 'lambda-function-neo4j-importer', 
+            entry="../neo4j-importer",
+            index="app.py",
+            handler="lambda_handler",
+            runtime=Runtime.PYTHON_3_8,
+            memory_size=256,
+            timeout=cdk.Duration.seconds(60),
+            vpc=vpc,
+            vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Private').subnets),
+            environment={
+                "neo4j_address": instance.instance_private_ip,
+                "neo4j_user_secret_name": neo4j_user_secret.secret_name
+            }
+        )
+
+        neo4j_importer_function.add_event_source(
+            S3EventSource(bucket,
+                events= [EventType.OBJECT_CREATED, EventType.OBJECT_REMOVED],
+                filters= [ { "prefix": "raw/", "suffix": ".rdf"}]
+            )
+        )
+
+        # Grant lambda read/write access to the S3 bucket for reading raw rdf, writing prepared rdf and generating signed uri
+        bucket.grant_read_write(neo4j_importer_function.role)
+        neo4j_user_secret.grant_read(neo4j_importer_function.role)
