@@ -12,10 +12,13 @@ logger.setLevel(logging.INFO)
 
 logger.info('Loading function')
 
-# s3 = boto3.client('s3')
+s3_client = boto3.client('s3')
+sm_client = boto3.client('secretsmanager')
+
+
 # With boto3, the S3 urls are virtual by default, which then require internet access to be resolved to region specific urls. This causes the hanging of the Lambda function until timeout.
 #To resolve this requires use of a Config object when creating the client, which tells boto3 to create path based S3 urls instead
-s3 = boto3.client('s3', 'eu-west-1', config=botocore.config.Config(s3={'addressing_style':'path'}))
+# s3 = boto3.client('s3', 'eu-west-1', config=botocore.config.Config(s3={'addressing_style':'path'}))
 
 def lambda_handler(event, context):
     logger.info("Received event: " + json.dumps(event, indent=2))
@@ -26,7 +29,7 @@ def lambda_handler(event, context):
     try:
         logger.info(f"reading object from bucket {bucket} with key {key}")
 
-        raw_file_object = s3.get_object(Bucket=bucket, Key=key)
+        raw_file_object = s3_client.get_object(Bucket=bucket, Key=key)
         logger.info("CONTENT TYPE: " + raw_file_object['ContentType'])
 
         raw_file_content = raw_file_object['Body'].read().decode('utf-8')
@@ -42,7 +45,7 @@ def lambda_handler(event, context):
         
         prepared_file_key = key.replace('raw/','prepared/')
 
-        s3.put_object(Body=prepared_file_content, Bucket=bucket, Key=prepared_file_key)
+        s3_client.put_object(Body=prepared_file_content, Bucket=bucket, Key=prepared_file_key)
 
         logger.info("prepared file written")
 
@@ -54,9 +57,8 @@ def lambda_handler(event, context):
 
         logger.info("presigned url: " + rdf_presigned_url)
 
-         # TODO: Get neo4j password from secrets manager
         neo4j_address = os.environ['neo4j_address']
-        neo4j_user_password = os.environ['TEMP_neo4j_password']
+        neo4j_user_password = get_simple_secret(os.environ['neo4j_user_secret_name'])
 
         neo4j_driver = GraphDatabase.driver(f"neo4j://{neo4j_address}:7687", auth=("neo4j", neo4j_user_password))
         logger.info("neo4j driver initialized")
@@ -80,3 +82,12 @@ def clear_rdf(tx):
 
 def import_rdf(tx, rdf_presigned_url):
     tx.run(f"CALL n10s.rdf.import.fetch(\"{rdf_presigned_url}\", \"RDF/XML\")")
+
+def get_simple_secret(secret_name: str):
+    get_secret_value_response = sm_client.get_secret_value(SecretId=secret_name)
+    logger.info(get_secret_value_response)
+
+    return get_secret_value_response['SecretString']
+
+
+
