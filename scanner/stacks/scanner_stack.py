@@ -97,7 +97,7 @@ class ScannerStack(cdk.Stack):
         # Trigger task every 24 hours
         Rule(self, "events-rule-altimeter-daily-scan",
             rule_name="evrule--altimeter-daily-scan",
-            schedule=Schedule.cron(hour="0"),
+            schedule=Schedule.cron(hour="0", minute="0"),
             description="Daily altimeter scan",
             targets=[EcsTask(
                 task_definition=task_definition,
@@ -114,7 +114,7 @@ class ScannerStack(cdk.Stack):
             targets=[EcsTask(
                 task_definition=task_definition,
                 cluster=cluster,
-                subnet_selection=SubnetSelection(subnet_type=SubnetType.PUBLIC)
+                subnet_selection=SubnetSelection(subnet_type=SubnetType.PRIVATE)
             )]
         )        
 
