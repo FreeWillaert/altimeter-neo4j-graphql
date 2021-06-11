@@ -1,7 +1,7 @@
 from aws_cdk import core as cdk
 from aws_cdk.aws_ec2 import BlockDevice, BlockDeviceVolume, EbsDeviceVolumeType, IVpc, IInstance, Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Peer, Port, SecurityGroup, SubnetConfiguration, SubnetSelection, SubnetType, UserData, Vpc
 from aws_cdk.aws_iam import CfnInstanceProfile, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal
-from aws_cdk.aws_secretsmanager import Secret
+from aws_cdk.aws_secretsmanager import Secret, ISecret
 
 from .config import read_config
 
@@ -9,6 +9,7 @@ NEO4J_USER_SECRET_NAME = "secret-altimeter-neo4j-user"
 
 class Neo4jStack(cdk.Stack):
 
+    neo4j_user_secret: ISecret
     instance: IInstance
 
     def __init__(self, scope: cdk.Construct, construct_id: str, vpc: IVpc, **kwargs) -> None:
@@ -16,7 +17,7 @@ class Neo4jStack(cdk.Stack):
 
         config = read_config()
 
-        neo4j_user_secret = Secret(self,'secretsmanager-secret-neo4j-user',
+        self.neo4j_user_secret = Secret(self,'secretsmanager-secret-neo4j-user',
             secret_name=NEO4J_USER_SECRET_NAME
         )
        
@@ -52,7 +53,7 @@ class Neo4jStack(cdk.Stack):
                     statements=[
                         PolicyStatement(
                             actions=['secretsmanager:GetSecretValue'],
-                            resources=[neo4j_user_secret.secret_arn]
+                            resources=[self.neo4j_user_secret.secret_arn]
                         )
                     ]
                 )

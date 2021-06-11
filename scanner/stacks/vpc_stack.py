@@ -24,5 +24,3 @@ class VpcStack(cdk.Stack):
                 )
             ]
         )
-
-        # TODO: create VPC Endpoint for S3
