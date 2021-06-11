@@ -1,18 +1,15 @@
-import os.path
-from re import A
-
 from aws_cdk import core as cdk
-from aws_cdk.aws_ec2 import BlockDevice, BlockDeviceVolume, EbsDeviceVolumeType, IVpc, Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Peer, Port, SecurityGroup, SubnetConfiguration, SubnetSelection, SubnetType, UserData, Vpc
+from aws_cdk.aws_ec2 import BlockDevice, BlockDeviceVolume, EbsDeviceVolumeType, IVpc, IInstance, Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Peer, Port, SecurityGroup, SubnetConfiguration, SubnetSelection, SubnetType, UserData, Vpc
 from aws_cdk.aws_iam import CfnInstanceProfile, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal
 from aws_cdk.aws_secretsmanager import Secret
-# from aws_cdk.aws_iam import AccountPrincipal, ManagedPolicy, Role, ServicePrincipal
-# from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption
 
 from .config import read_config
 
 NEO4J_USER_SECRET_NAME = "secret-altimeter-neo4j-user"
 
 class Neo4jStack(cdk.Stack):
+
+    instance: IInstance
 
     def __init__(self, scope: cdk.Construct, construct_id: str, vpc: IVpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -62,16 +59,14 @@ class Neo4jStack(cdk.Stack):
             }
         )
 
-        instance_profile = CfnInstanceProfile(self, "ec2-instprof-neo4j-server-instance",
-            roles=[neo4j_server_instance_role.role_name]
-        )
-
         instance_security_group = SecurityGroup(self, "ec2-sg-neo4j-server-instance",
             description="Neo4j Server Instance",
             vpc=vpc
         )
 
-        instance_security_group.add_ingress_rule(Peer.ipv4(vpc.vpc_cidr_block), Port.tcp(7687), 'Bolt from within own VPC')
+        # instance_security_group.add_ingress_rule(Peer.ipv4(vpc.vpc_cidr_block), Port.tcp(7687), 'Bolt from within own VPC')
+        instance_security_group.add_ingress_rule(Peer.ipv4("0.0.0.0/0"), Port.tcp(7687), 'Bolt from ANYWHERE') # TESTING
+        instance_security_group.add_ingress_rule(Peer.ipv4("0.0.0.0/0"), Port.tcp(7473), 'Bolt from ANYWHERE') # TESTING
 
         # Prepare userdata script
         with open("./resources/neo4j-server-instance-userdata.sh", "r") as f:
@@ -82,7 +77,7 @@ class Neo4jStack(cdk.Stack):
 
         instance_type = InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MEDIUM)
 
-        instance = Instance(self, 'ec2-instance-neo4j-server-instance',
+        self.instance = Instance(self, 'ec2-instance-neo4j-server-instance',
             instance_name="neo4j-community-standalone-server",
             machine_image=MachineImage.generic_linux(
                 ami_map={
@@ -92,7 +87,8 @@ class Neo4jStack(cdk.Stack):
             instance_type=instance_type,
             role=neo4j_server_instance_role,
             vpc=vpc,
-            vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Private').subnets),
+            # vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Private').subnets),
+            vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Public').subnets), # TESTING
             security_group=instance_security_group,
             user_data=user_data,
             block_devices=[
@@ -117,6 +113,6 @@ class Neo4jStack(cdk.Stack):
             ]
         )
 
-        cdk.Tags.of(instance).add("neo4j_mode", "SINGLE")
-        cdk.Tags.of(instance).add("dbms_mode", "SINGLE")
+        cdk.Tags.of(self.instance).add("neo4j_mode", "SINGLE")
+        cdk.Tags.of(self.instance).add("dbms_mode", "SINGLE")
 

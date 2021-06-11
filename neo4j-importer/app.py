@@ -2,6 +2,7 @@ import json
 import urllib.parse
 import os
 import boto3
+import botocore
 import logging
 
 from neo4j import GraphDatabase
@@ -11,7 +12,10 @@ logger.setLevel(logging.INFO)
 
 logger.info('Loading function')
 
-s3 = boto3.client('s3')
+# s3 = boto3.client('s3')
+# With boto3, the S3 urls are virtual by default, which then require internet access to be resolved to region specific urls. This causes the hanging of the Lambda function until timeout.
+#To resolve this requires use of a Config object when creating the client, which tells boto3 to create path based S3 urls instead
+s3 = boto3.client('s3', 'eu-west-1', config=botocore.config.Config(s3={'addressing_style':'path'}))
 
 def lambda_handler(event, context):
     logger.info("Received event: " + json.dumps(event, indent=2))
@@ -20,7 +24,7 @@ def lambda_handler(event, context):
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
     try:
-        logger.info("reading object")
+        logger.info(f"reading object from bucket {bucket} with key {key}")
 
         raw_file_object = s3.get_object(Bucket=bucket, Key=key)
         logger.info("CONTENT TYPE: " + raw_file_object['ContentType'])
@@ -50,8 +54,8 @@ def lambda_handler(event, context):
 
         logger.info("presigned url: " + rdf_presigned_url)
 
-         # TODO: Get neo4j address and password
-        neo4j_address = "10.0.108.245"
+         # TODO: Get neo4j password from secrets manager
+        neo4j_address = os.environ['neo4j_address']
         neo4j_user_password = os.environ['TEMP_neo4j_password']
 
         neo4j_driver = GraphDatabase.driver(f"neo4j://{neo4j_address}:7687", auth=("neo4j", neo4j_user_password))
@@ -75,4 +79,4 @@ def clear_rdf(tx):
     tx.run("MATCH (resource:Resource) DETACH DELETE resource")
 
 def import_rdf(tx, rdf_presigned_url):
-    tx.run("CALL n10s.rdf.import.fetch([rdf_url], \"RDF/XML\")")
+    tx.run(f"CALL n10s.rdf.import.fetch(\"{rdf_presigned_url}\", \"RDF/XML\")")

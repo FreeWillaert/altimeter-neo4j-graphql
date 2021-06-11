@@ -19,12 +19,14 @@ setuptools.setup(
     packages=setuptools.find_packages(where="scanner"),
 
     install_requires=[
-        "aws-cdk.core==1.107.0",
-        "aws-cdk.aws_ecs==1.107.0",
-        "aws_cdk.aws_ecr_assets==1.107.0",
-        "aws_cdk.aws_iam==1.107.0",
-        "aws_cdk.aws_s3==1.107.0",
-        "aws_cdk.aws_events_targets==1.107.0",
+        "aws-cdk.core==1.108.0",
+        "aws-cdk.aws_ecs==1.108.0",
+        "aws_cdk.aws_ecr_assets==1.108.0",
+        "aws_cdk.aws_iam==1.108.0",
+        "aws_cdk.aws_lambda==1.108.0",
+        "aws_cdk.aws_lambda_python==1.108.0",
+        "aws_cdk.aws_s3==1.108.0",
+        "aws_cdk.aws_events_targets==1.108.0",
     ],
 
     python_requires=">=3.6",

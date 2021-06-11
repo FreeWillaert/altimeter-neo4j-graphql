@@ -8,18 +8,20 @@ from aws_cdk.aws_ecr_assets import DockerImageAsset
 from aws_cdk.aws_events import EventPattern, Rule, Schedule
 from aws_cdk.aws_events_targets import EcsTask
 from aws_cdk.aws_logs import RetentionDays
-from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption
+from aws_cdk.aws_s3 import BlockPublicAccess, Bucket, BucketEncryption, IBucket
 
 from .config import read_config
 
 class ScannerStack(cdk.Stack):
+
+    bucket: IBucket
 
     def __init__(self, scope: cdk.Construct, construct_id: str, vpc: IVpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         config = read_config()
 
-        Bucket(self, "s3-bucket-altimeter", 
+        self.bucket = Bucket(self, "s3-bucket-altimeter", 
             bucket_name=config["s3_bucket"],
             encryption=BucketEncryption.S3_MANAGED,
             block_public_access=BlockPublicAccess.BLOCK_ALL

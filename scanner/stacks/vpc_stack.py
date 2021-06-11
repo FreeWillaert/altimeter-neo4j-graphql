@@ -11,7 +11,6 @@ class VpcStack(cdk.Stack):
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # TODO: See if this can also run in a private subnet...?
         self.vpc = Vpc(self, "ec2-vpc-altimeter",
             max_azs=1,
             subnet_configuration=[
@@ -25,3 +24,5 @@ class VpcStack(cdk.Stack):
                 )
             ]
         )
+
+        # TODO: create VPC Endpoint for S3
