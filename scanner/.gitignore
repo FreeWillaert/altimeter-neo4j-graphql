@@ -10,3 +10,5 @@ __pycache__
 .cdk.staging
 cdk.out
 config.json
+
+node_modules

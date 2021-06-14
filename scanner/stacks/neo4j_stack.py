@@ -1,6 +1,6 @@
 from aws_cdk import core as cdk
-from aws_cdk.aws_ec2 import BlockDevice, BlockDeviceVolume, EbsDeviceVolumeType, IVpc, IInstance, Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Peer, Port, SecurityGroup, SubnetConfiguration, SubnetSelection, SubnetType, UserData, Vpc
-from aws_cdk.aws_iam import CfnInstanceProfile, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal
+from aws_cdk.aws_ec2 import BlockDevice, BlockDeviceVolume, EbsDeviceVolumeType, IVpc, IInstance, Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Peer, Port, SecurityGroup, SubnetSelection, UserData
+from aws_cdk.aws_iam import ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal
 from aws_cdk.aws_secretsmanager import Secret, ISecret
 
 NEO4J_USER_SECRET_NAME = "secret-altimeter-neo4j-user"
