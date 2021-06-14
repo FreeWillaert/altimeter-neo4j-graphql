@@ -1,6 +1,6 @@
 import json
 
-from typing import Dict, List
+from typing import Dict, List, Sequence
 from aws_cdk import core as cdk
 from aws_cdk import aws_lambda_nodejs
 from aws_cdk.aws_ec2 import IInstance, IVpc, SubnetSelection
@@ -30,7 +30,10 @@ class GraphqlApiStack(cdk.Stack):
             bundling=BundlingOptions(
                 source_map=True,
                 target= 'es2020',
-                command_hooks=self.CommandHooks()
+                command_hooks=self.CommandHooks(),
+                external_modules=[
+                    '@vue/compiler-sfc'
+                ]
             )
         )
 

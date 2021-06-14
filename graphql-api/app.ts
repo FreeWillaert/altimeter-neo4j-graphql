@@ -124,4 +124,9 @@ const server = new ApolloServer({
     context: { driver }
 });
 
-exports.graphqlHandler = server.createHandler();
+const apollo_handler = server.createHandler()
+
+export function handler(event: any, context: any, callback: any): any {
+    console.log("received event: " + JSON.stringify(event, null, 2))
+    return apollo_handler(event, context, callback)
+}
