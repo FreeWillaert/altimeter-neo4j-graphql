@@ -1,18 +1,20 @@
 from typing import List
+from aws_cdk.aws_lambda import Runtime
+
+import jsii
 from aws_cdk import core as cdk
 from aws_cdk import aws_lambda_nodejs
 from aws_cdk.aws_ec2 import IInstance, IVpc, SubnetSelection
 from aws_cdk.aws_secretsmanager import ISecret
 from aws_cdk.aws_lambda_nodejs import ICommandHooks, NodejsFunction, BundlingOptions
-import jsii
-
+from aws_cdk.aws_apigateway import LambdaRestApi
 class GraphqlApiStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, config, vpc: IVpc, instance: IInstance, neo4j_user_secret: ISecret, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        function = NodejsFunction(self, 'lambda-function-graphql-api',
-            # function_name=
+        graphql_api_function = NodejsFunction(self, 'lambda-function-graphql-api',
+            runtime=Runtime.NODEJS_12_X, # TODO: Check out if NODEJS_14_X also works with graphql handler.
             entry='../graphql-api/app.ts',
             memory_size=256,
             timeout=cdk.Duration.seconds(10),
@@ -33,7 +35,17 @@ class GraphqlApiStack(cdk.Stack):
         )
 
         # Grant lambda read access to the neo4j user secret
-        neo4j_user_secret.grant_read(function.role)
+        neo4j_user_secret.grant_read(graphql_api_function.role)
+
+        api = LambdaRestApi(self, 'apigateway-api-altimeter-graphql',
+            handler=graphql_api_function,            
+            proxy=False
+        )
+
+        items = api.root.add_resource('graphql');
+        items.add_method('GET')
+        items.add_method('POST')
+
 
     @jsii.implements(ICommandHooks)
     class CommandHooks:

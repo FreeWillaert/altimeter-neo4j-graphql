@@ -112,12 +112,47 @@ const resolvers = {
     }
 };
 
+const loggingPlugin = {
+
+    // Fires whenever a GraphQL request is received from a client.
+    requestDidStart(requestContext:any) {
+      console.log('Request started! Query:\n' +
+        requestContext.request.query);
+  
+      return {
+  
+        // Fires whenever Apollo Server will parse a GraphQL
+        // request to create its associated document AST.
+        parsingDidStart(requestContext:any) {
+            console.log('Parsing started!');
+        },
+  
+        // Fires whenever Apollo Server will validate a
+        // request's document AST against your GraphQL schema.
+        validationDidStart(requestContext:any) {
+            console.log('Validation started:');
+        },
+  
+        // Fires when Apollo Server encounters errors while parsing, 
+        // validating, or executing a GraphQL operation.
+        didEncounterErrors(requestContext:any) {
+            console.log('Did encounter errors.');
+            console.log(JSON.stringify(requestContext));
+        },              
+        // Fires whenever Apollo Server is about to send a response 
+        // for a GraphQL operation, 
+        // even if the GraphQL operation encounters one or more errors.
+        willSendResponse(requestContext:any) {
+            console.log('Will send response.');
+            console.log(JSON.stringify(requestContext));
+          },      
+        }        
+    },
+  };
+
 const schema = makeAugmentedSchema({ typeDefs, resolvers })
 
-
-export async function handler(event: any, context: any, callback: any): Promise<any> {
-    console.log("received event: " + JSON.stringify(event, null, 2))
-
+const createHandler = async () => {
     // TODO: Possible to avoid initializing driver and server every time while also ensuring that a potentially rotated password is used? (use driver.verifyConnectivity ?)
     const neo4jUrl = `bolt://${process.env.neo4j_address}:7687`
 
@@ -131,15 +166,14 @@ export async function handler(event: any, context: any, callback: any): Promise<
 
     const server = new ApolloServer({
         schema,
+        plugins: [loggingPlugin],
         context: { driver }
     });
-    
 
-    
-
-    const apollo_handler = server.createHandler()
-
-    return apollo_handler(event, context, callback)
-}
-
-
+    return server.createHandler();
+ };
+ 
+ export const handler = (event: any, context: any, callback: any) => {
+    console.log("received event: " + JSON.stringify(event, null, 2))
+    createHandler().then((handler: any) => handler(event, context, callback));
+ };
