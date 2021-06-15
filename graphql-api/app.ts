@@ -1,21 +1,16 @@
 import * as fs from 'fs'
 import * as _ from 'lodash'
+import * as AWS from 'aws-sdk'
 
 import * as neo4j from 'neo4j-driver'
 import { makeAugmentedSchema, neo4jgraphql } from 'neo4j-graphql-js'
 import { ApolloServer } from 'apollo-server-lambda'
 
-
-
-// TODO: Read from env vars?
-const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+const sm =  new AWS.SecretsManager();
 
 const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8');
 
-const driver = neo4j.driver(
-    config.neo4j.url,
-    neo4j.auth.basic(config.neo4j.user, config.neo4j.password)
-);
+let driver: neo4j.Driver
 
 // TODO: Move to separate module
 const resolvers = {
@@ -119,14 +114,32 @@ const resolvers = {
 
 const schema = makeAugmentedSchema({ typeDefs, resolvers })
 
-const server = new ApolloServer({
-    schema,
-    context: { driver }
-});
 
-const apollo_handler = server.createHandler()
-
-export function handler(event: any, context: any, callback: any): any {
+export async function handler(event: any, context: any, callback: any): Promise<any> {
     console.log("received event: " + JSON.stringify(event, null, 2))
+
+    // TODO: Possible to avoid initializing driver and server every time while also ensuring that a potentially rotated password is used? (use driver.verifyConnectivity ?)
+    const neo4jUrl = `bolt://${process.env.neo4j_address}:7687`
+
+    const neo4jSecret = await sm.getSecretValue({SecretId: process.env.neo4j_user_secret_name!}).promise()
+    const neo4jPassword = neo4jSecret.SecretString!
+
+    driver = neo4j.driver(
+        neo4jUrl,
+        neo4j.auth.basic("neo4j", neo4jPassword)
+    );
+
+    const server = new ApolloServer({
+        schema,
+        context: { driver }
+    });
+    
+
+    
+
+    const apollo_handler = server.createHandler()
+
     return apollo_handler(event, context, callback)
 }
+
+

@@ -42,8 +42,6 @@ class GraphqlApiStack(cdk.Stack):
 
         def after_bundling(self, input_dir: str, output_dir: str):
             commands: List[str] = [] 
-            # TODO: Actually need config.json?
-            commands.append(f"cp {input_dir}/../graphql-api/config.json {output_dir}")
             commands.append(f"cp {input_dir}/../graphql-api/schema.graphql {output_dir}")
             commands.append("echo 'AFTER BUNDLING COMMANDS DONE'")
             return commands
