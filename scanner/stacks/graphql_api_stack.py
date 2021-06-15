@@ -1,15 +1,10 @@
-import json
-
-from typing import Dict, List, Sequence
+from typing import List
 from aws_cdk import core as cdk
 from aws_cdk import aws_lambda_nodejs
 from aws_cdk.aws_ec2 import IInstance, IVpc, SubnetSelection
 from aws_cdk.aws_secretsmanager import ISecret
 from aws_cdk.aws_lambda_nodejs import ICommandHooks, NodejsFunction, BundlingOptions
 import jsii
-
-# NEO4J_USER_SECRET_NAME = "secret-altimeter-neo4j-user"
-
 
 class GraphqlApiStack(cdk.Stack):
 
@@ -36,6 +31,9 @@ class GraphqlApiStack(cdk.Stack):
                 ]
             )
         )
+
+        # Grant lambda read access to the neo4j user secret
+        neo4j_user_secret.grant_read(function.role)
 
     @jsii.implements(ICommandHooks)
     class CommandHooks:

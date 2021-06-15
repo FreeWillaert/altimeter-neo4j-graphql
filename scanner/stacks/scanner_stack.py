@@ -146,4 +146,5 @@ class ScannerStack(cdk.Stack):
 
         # Grant lambda read/write access to the S3 bucket for reading raw rdf, writing prepared rdf and generating signed uri
         bucket.grant_read_write(neo4j_importer_function.role)
+        # Grant lambda read access to the neo4j user secret
         neo4j_user_secret.grant_read(neo4j_importer_function.role)
