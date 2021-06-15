@@ -27,7 +27,7 @@ class GraphqlApiStack(cdk.Stack):
                 target= 'es2020',
                 command_hooks=self.CommandHooks(),
                 external_modules=[
-                    '@vue/compiler-sfc'
+                    '@vue/compiler-sfc' # This causes trouble when handled by esbuild, and should not be needed.
                 ]
             )
         )
