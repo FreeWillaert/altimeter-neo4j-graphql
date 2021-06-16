@@ -29,7 +29,9 @@ class GraphqlApiStack(cdk.Stack):
                 target= 'es2018',                
                 command_hooks=self.CommandHooks(),
                 node_modules=[
-                     "neo4j-graphql-js" # Something goes wrong when this module is bundled
+                    # Something goes wrong when these modules are bundled
+                    "graphql",
+                    "neo4j-graphql-js" 
                 ]
             )
         )
@@ -42,7 +44,11 @@ class GraphqlApiStack(cdk.Stack):
             proxy=False
         )
 
-        key = api.add_api_key('default');
+        # Minimal security: Require an API key - use must go get the key value and configure its browser to send it along.
+        default_key = api.add_api_key('default')
+        default_usage_plan = api.add_usage_plan('apigateway-usageplan-altimeter-graphql', name='default')
+        default_usage_plan.add_api_key(default_key)
+        default_usage_plan.add_api_stage(stage=api.deployment_stage)
 
         items = api.root.add_resource('graphql',
             default_cors_preflight_options=CorsOptions(
@@ -52,8 +58,6 @@ class GraphqlApiStack(cdk.Stack):
         )
         items.add_method('GET', api_key_required=True)
         items.add_method('POST', api_key_required=True)
-
-
 
     @jsii.implements(ICommandHooks)
     class CommandHooks:
