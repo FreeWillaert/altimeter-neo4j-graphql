@@ -29,17 +29,8 @@ class GraphqlApiStack(cdk.Stack):
                 target= 'es2018',                
                 command_hooks=self.CommandHooks(),
                 node_modules=[
-                    "apollo-server",
-                    "apollo-server-lambda",
-                    "graphql",
-                    "lodash",
-                    "neo4j-driver",
-                    "neo4j-graphql-js"
+                     "neo4j-graphql-js" # Something goes wrong when this module is bundled
                 ]
-                # ,
-                # external_modules=[
-                #     '@vue/compiler-sfc' # This causes trouble when handled by esbuild, and should not be needed.
-                # ]
             )
         )
 
@@ -48,12 +39,17 @@ class GraphqlApiStack(cdk.Stack):
 
         api = LambdaRestApi(self, 'apigateway-api-altimeter-graphql',
             handler=graphql_api_function,            
-            proxy=False
+            proxy=False,
+            
         )
 
+        key = api.add_api_key('default');
+
+        # TODO: try without these?
         items = api.root.add_resource('graphql');
-        items.add_method('GET')
-        items.add_method('POST')
+        items.add_method('GET', api_key_required=True)
+        items.add_method('POST', api_key_required=True)
+
 
 
     @jsii.implements(ICommandHooks)
