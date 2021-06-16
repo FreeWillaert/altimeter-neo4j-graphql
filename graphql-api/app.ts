@@ -6,7 +6,7 @@ import * as neo4j from 'neo4j-driver'
 import { makeAugmentedSchema, neo4jgraphql } from 'neo4j-graphql-js'
 import { ApolloServer } from 'apollo-server-lambda'
 
-const sm =  new AWS.SecretsManager();
+const sm =  new AWS.SecretsManager({region: "eu-west-1"});
 
 const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8');
 
@@ -153,27 +153,35 @@ const loggingPlugin = {
 const schema = makeAugmentedSchema({ typeDefs, resolvers })
 
 const createHandler = async () => {
-    // TODO: Possible to avoid initializing driver and server every time while also ensuring that a potentially rotated password is used? (use driver.verifyConnectivity ?)
-    const neo4jUrl = `bolt://${process.env.neo4j_address}:7687`
+    try {
+        // TODO: Possible to avoid initializing driver and server every time while also ensuring that a potentially rotated password is used? (use driver.verifyConnectivity ?)
+        const neo4jUrl = `bolt://${process.env.neo4j_address}:7687`
 
-    const neo4jSecret = await sm.getSecretValue({SecretId: process.env.neo4j_user_secret_name!}).promise()
-    const neo4jPassword = neo4jSecret.SecretString!
+        const neo4jSecret = await sm.getSecretValue({SecretId: process.env.neo4j_user_secret_name!}).promise()
+        const neo4jPassword = neo4jSecret.SecretString!
 
-    driver = neo4j.driver(
-        neo4jUrl,
-        neo4j.auth.basic("neo4j", neo4jPassword)
-    );
+        driver = neo4j.driver(
+            neo4jUrl,
+            neo4j.auth.basic("neo4j", neo4jPassword)
+        );
 
-    const server = new ApolloServer({
-        schema,
-        plugins: [loggingPlugin],
-        context: { driver }
-    });
+        const server = new ApolloServer({
+            schema,
+            plugins: [loggingPlugin],
+            context: { driver }
+        });
 
-    return server.createHandler();
+        return server.createHandler();
+    }
+    catch(error) {
+        console.error(error)
+    }
  };
  
  export const handler = (event: any, context: any, callback: any) => {
     console.log("received event: " + JSON.stringify(event, null, 2))
-    createHandler().then((handler: any) => handler(event, context, callback));
+    createHandler().then(
+        (handler: any) => handler(event, context, callback)
+    ).catch((error:any) => console.error(error))
+
  };

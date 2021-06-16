@@ -7,7 +7,7 @@ from aws_cdk import aws_lambda_nodejs
 from aws_cdk.aws_ec2 import IInstance, IVpc, SubnetSelection
 from aws_cdk.aws_secretsmanager import ISecret
 from aws_cdk.aws_lambda_nodejs import ICommandHooks, NodejsFunction, BundlingOptions
-from aws_cdk.aws_apigateway import LambdaRestApi
+from aws_cdk.aws_apigateway import ApiKeySourceType, LambdaRestApi
 class GraphqlApiStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, config, vpc: IVpc, instance: IInstance, neo4j_user_secret: ISecret, **kwargs) -> None:
@@ -26,11 +26,20 @@ class GraphqlApiStack(cdk.Stack):
             },
             bundling=BundlingOptions(
                 source_map=True,
-                target= 'es2020',
+                target= 'es2018',                
                 command_hooks=self.CommandHooks(),
-                external_modules=[
-                    '@vue/compiler-sfc' # This causes trouble when handled by esbuild, and should not be needed.
+                node_modules=[
+                    "apollo-server",
+                    "apollo-server-lambda",
+                    "graphql",
+                    "lodash",
+                    "neo4j-driver",
+                    "neo4j-graphql-js"
                 ]
+                # ,
+                # external_modules=[
+                #     '@vue/compiler-sfc' # This causes trouble when handled by esbuild, and should not be needed.
+                # ]
             )
         )
 
@@ -49,6 +58,9 @@ class GraphqlApiStack(cdk.Stack):
 
     @jsii.implements(ICommandHooks)
     class CommandHooks:
+        def before_install(self, input_dir: str, output_dir: str):
+            return []
+
         def before_bundling(self, input_dir: str, output_dir: str):
             return []
 
