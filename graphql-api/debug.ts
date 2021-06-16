@@ -1,10 +1,22 @@
 import fs from 'fs'
-import * as app from './app'
+import { createServerConfig } from './app'
 
-const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
-const event = JSON.parse(fs.readFileSync('./event.json', 'utf-8'));
+import {ApolloServer} from 'apollo-server'
 
-process.env.neo4j_address = config.neo4j.address
-process.env.neo4j_user_secret_name = "secret-altimeter-neo4j-user"
+// app.handler(event,{},(data:any)=>console.log(data))
+(async () => {
+    const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'))
+    const event = JSON.parse(fs.readFileSync('./event.json', 'utf-8'))
+    
+    process.env.neo4j_address = config.neo4j.address
+    process.env.neo4j_user_secret_name = "secret-altimeter-neo4j-user"
 
-app.handler(event,{},(data:any)=>console.log(data))
+    const serverConfig = await createServerConfig()
+
+    const server = new ApolloServer(serverConfig)
+
+    server.listen(4000).then(({ url }) => {
+        console.log(`Online at ${url}`)
+    });
+})()
+

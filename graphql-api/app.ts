@@ -4,6 +4,7 @@ import * as AWS from 'aws-sdk'
 
 import * as neo4j from 'neo4j-driver'
 import { makeAugmentedSchema, neo4jgraphql } from 'neo4j-graphql-js'
+import { Config } from 'apollo-server'
 import { ApolloServer } from 'apollo-server-lambda'
 
 const sm =  new AWS.SecretsManager({region: "eu-west-1"});
@@ -152,25 +153,29 @@ const loggingPlugin = {
 
 const schema = makeAugmentedSchema({ typeDefs, resolvers })
 
+export async function createServerConfig(): Promise<Config> {
+    // TODO: Possible to avoid initializing driver and server every time while also ensuring that a potentially rotated password is used? (use driver.verifyConnectivity ?)
+    const neo4jUrl = `bolt://${process.env.neo4j_address}:7687`
+
+    const neo4jSecret = await sm.getSecretValue({SecretId: process.env.neo4j_user_secret_name!}).promise()
+    const neo4jPassword = neo4jSecret.SecretString!
+
+    driver = neo4j.driver(
+        neo4jUrl,
+        neo4j.auth.basic("neo4j", neo4jPassword)
+    );
+
+    return {
+        schema,
+        plugins: [loggingPlugin],
+        context: { driver }
+    }
+}
+
 const createHandler = async () => {
     try {
-        // TODO: Possible to avoid initializing driver and server every time while also ensuring that a potentially rotated password is used? (use driver.verifyConnectivity ?)
-        const neo4jUrl = `bolt://${process.env.neo4j_address}:7687`
-
-        const neo4jSecret = await sm.getSecretValue({SecretId: process.env.neo4j_user_secret_name!}).promise()
-        const neo4jPassword = neo4jSecret.SecretString!
-
-        driver = neo4j.driver(
-            neo4jUrl,
-            neo4j.auth.basic("neo4j", neo4jPassword)
-        );
-
-        const server = new ApolloServer({
-            schema,
-            plugins: [loggingPlugin],
-            context: { driver }
-        });
-
+        const serverConfig = await createServerConfig()
+        const server = new ApolloServer(serverConfig); // This is the 'lambda' ApolloServer!
         return server.createHandler();
     }
     catch(error) {

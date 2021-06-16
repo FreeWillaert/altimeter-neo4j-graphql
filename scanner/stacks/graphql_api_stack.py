@@ -16,7 +16,7 @@ class GraphqlApiStack(cdk.Stack):
         graphql_api_function = NodejsFunction(self, 'lambda-function-graphql-api',
             runtime=Runtime.NODEJS_12_X, # TODO: Check out if NODEJS_14_X also works with graphql handler.
             entry='../graphql-api/app.ts',
-            memory_size=256,
+            memory_size=512, 
             timeout=cdk.Duration.seconds(10),
             vpc=vpc,
             vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Private').subnets),
@@ -29,7 +29,7 @@ class GraphqlApiStack(cdk.Stack):
                 target= 'es2018',                
                 command_hooks=self.CommandHooks(),
                 node_modules=[
-                    # Something goes wrong when these modules are bundled
+                    # Something goes wrong when these modules are bundled, so leave them out
                     "graphql",
                     "neo4j-graphql-js" 
                 ]
