@@ -13,12 +13,20 @@ const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8');
 
 let driver: neo4j.Driver
 
+// TODO: Get account names json through http request
+const accountNames:any = JSON.parse(fs.readFileSync('./accounts.json','utf-8'))
+
 // TODO: Move to separate module
 const resolvers = {
     ec2__instance: {
         // dummy(parent) {
         //     return `${parent.field1} ${parent.field2}`; // TODO: This only works if field1 and field2 are also requested by the query!
         // },
+    },
+    aws__account: {
+        name(parent:any) {
+            return accountNames[parent.alti__account_id] || "[UNKNOWN]"
+        }
     },
     Query: {
         internet_exposed_ec2_instances: async (parent:any, args:any, context:any, info:any) => {

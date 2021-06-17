@@ -14,20 +14,37 @@
 
         alti__id: String!
         alti__account_id: String!
+        name: String! @neo4j_ignore
 
+        vpcs: [ec2__vpc] @relation(name: "alti__account", direction: IN)
+        ec2_instances: [ec2__instance] @relation(name: "alti__account", direction: IN)
+        lambda_functions: [lambda__function] @relation(name: "alti__account", direction: IN)
+    }
+
+    type aws__region implements IResource {
+        id: Int!
+        uri: String!
+
+        alti__id: String!
+        alti__name: String
+        alti__opt_in_status: String
+        resources: [Resource] @relation(name: "alti__region", direction: IN)
+
+        ec2__instances: [ec2__instance] @relation(name: "alti__region", direction: IN)
         lambda_functions: [lambda__function] @relation(name: "alti__account", direction: IN)
     }
 
     type ec2__instance implements IResource {
         # ImageId
-        # Placement
+        # Placement ??
         # VpcId
         # SubnetId
-        # X SecurityGroups
         # IamInstanceProfile
 
         id: Int!
         uri: String!
+        account: aws__account @relation(name: "alti__account", direction: OUT)
+        region: aws__region @relation(name: "alti__region", direction: OUT)
 
         alti__ami_id: String!
         alti__ami_name: String!
@@ -45,10 +62,10 @@
         alti__state: String!
         alti__tenancy: String!
         tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
-        region: aws__region @relation(name: "alti__region", direction: OUT)
         security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
         network_interfaces: [ec2__network_interface] @relation(name: "alti__network_interface", direction: OUT)
-        # dummy: String! @ignore
+        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+        # Subnets
     }
 
     type ec2__network_interface implements IResource {
@@ -64,7 +81,7 @@
         alti__status: String!
         security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
         # SubnetId 
-        # VpcId
+        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
     }
 
     type ec2__security_group implements IResource {
@@ -75,15 +92,34 @@
         ingress_rules: [alti__ingress_rule] @relation(name: "alti__ingress_rule", direction: OUT)
     }
 
+    type ec2__vpc implements IResource {
+        id: Int!
+        uri: String!
+        account: aws__account @relation(name: "alti__account", direction: OUT)
+        region: aws__region @relation(name: "alti__region", direction: OUT)
+
+        alti__is_default: String!
+        alti__cidr_block: String!
+        alti__state: String!
+        tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+
+        network_interfaces: [ec2__network_interface] @relation(name: "alti__vpc", direction: IN)
+        # Subnets
+    }
+
     type elb__loadbalancer { #implements IResource {
         # id: Int! # Not sure why but id remains null
         uri: String!
+        account: aws__account @relation(name: "alti__account", direction: OUT)
+        region: aws__region @relation(name: "alti__region", direction: OUT)
+
 
         alti__dns_name: String!
         alti__created_time: String!
         alti__load_balancer_name: String!
         alti__scheme: String!
-        alti__vpc_id: String
+        # alti__vpc_id: String
+        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
         # Subnets
         alti__type: String!
         security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
@@ -97,12 +133,15 @@
     type elbv2__loadbalancer { #implements IResource {
         # id: Int! # Not sure why but id remains null
         uri: String!
+        account: aws__account @relation(name: "alti__account", direction: OUT)
+        region: aws__region @relation(name: "alti__region", direction: OUT)
 
         alti__dns_name: String!
         alti__created_time: String!
         alti__load_balancer_name: String!
         alti__scheme: String!
-        alti__vpc_id: String
+        # alti__vpc_id: String
+        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
         # State
         alti__type: String!
         # AvailabilityZones
@@ -116,12 +155,12 @@
     type lambda__function { # implements IResource {
         # id: Int!
         uri: String!
+        account: aws__account @relation(name: "alti__account", direction: OUT)
+        region: aws__region @relation(name: "alti__region", direction: OUT)
 
         alti__id: String!
         alti__function_name: String!
         alti__runtime: String!
-
-        account: aws__account @relation(name: "alti__account", direction: OUT)
 
         # VpcConfig
     }
@@ -179,17 +218,6 @@
         alti__key: String!
         alti__value: String
         ec2__instances: [ec2__instance] @relation(name: "alti__tag", direction: IN)
-    }
-
-    type aws__region implements IResource {
-        id: Int!
-        uri: String!
-
-        alti__id: String!
-        alti__name: String
-        alti__opt_in_status: String
-        resources: [Resource] @relation(name: "alti__region", direction: IN)
-        ec2__instances: [ec2__instance] @relation(name: "alti__region", direction: IN)
     }
 
     type Query {
