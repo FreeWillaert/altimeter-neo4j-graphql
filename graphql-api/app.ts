@@ -25,7 +25,7 @@ const resolvers = {
     },
     aws__account: {
         name(parent:any) {
-            return accountNames[parent.alti__account_id] || "[UNKNOWN]"
+            return (parent.alti__account_id) ? accountNames[parent.alti__account_id] || "[UNKNOWN]" : "[need alti__account_id]"
         }
     },
     Query: {
