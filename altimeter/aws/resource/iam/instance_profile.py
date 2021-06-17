@@ -16,7 +16,8 @@ from altimeter.core.graph.schema import Schema
 class InstanceProfileResourceSpec(IAMResourceSpec):
     """Resource for Instance Profiles"""
 
-    type_name = "instance-profile"
+    # type_name = "instance-profile"
+    type_name = "instance_profile"
     schema = Schema(
         ScalarField("InstanceProfileName", alti_key="name"),
         AnonymousListField(
