@@ -1,229 +1,327 @@
-    interface IResource {
-        id: Int!
-        uri: String!
-    }
+# Neo4j check queries:
 
-    type Resource implements IResource {
-        id: Int!
-        uri: String!
-    }
+# All fields for e.g. lambda__function
+# MATCH (n:ec2__instance) WITH DISTINCT keys(n) AS keys
+# UNWIND keys AS keyslisting WITH DISTINCT keyslisting AS allfields
+# RETURN allfields;
 
-    type aws__account { #} implements IResource {
-        # id: Int!
-        uri: String!
+# All relationships and the labels of the target nodes for e.g. lambda__function
+# MATCH (n:ec2__instance)-[r]->(m:Resource)
+# RETURN DISTINCT TYPE(r), LABELS(m)
 
-        alti__id: String!
-        alti__account_id: String!
-        name: String! @neo4j_ignore
-
-        vpcs: [ec2__vpc] @relation(name: "alti__account", direction: IN)
-        ec2_instances: [ec2__instance] @relation(name: "alti__account", direction: IN)
-        lambda_functions: [lambda__function] @relation(name: "alti__account", direction: IN)
-    }
-
-    type aws__region implements IResource {
-        id: Int!
-        uri: String!
-
-        alti__id: String!
-        alti__name: String
-        alti__opt_in_status: String
-        resources: [Resource] @relation(name: "alti__region", direction: IN)
-
-        ec2__instances: [ec2__instance] @relation(name: "alti__region", direction: IN)
-        lambda_functions: [lambda__function] @relation(name: "alti__account", direction: IN)
-    }
-
-    type ec2__instance implements IResource {
-        # ImageId
-        # Placement ??
-        # VpcId
-        # SubnetId
-        # IamInstanceProfile
-
-        id: Int!
-        uri: String!
-        account: aws__account @relation(name: "alti__account", direction: OUT)
-        region: aws__region @relation(name: "alti__region", direction: OUT)
-
-        alti__ami_id: String!
-        alti__ami_name: String!
-        alti__availability_zone: String
-        alti__instance_type: String!
-        alti__id: String!
-        alti__key_name: String
-        alti__launch_time: DateTime!
-        alti__name: String
-        alti__platform: String
-        alti__private_dns_name: String
-        alti__private_ip_address: String
-        alti__public_dns_name: String
-        alti__public_ip_address: String
-        alti__state: String!
-        alti__tenancy: String!
-        tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
-        security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
-        network_interfaces: [ec2__network_interface] @relation(name: "alti__network_interface", direction: OUT)
-        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-        # Subnets
-    }
-
-    type ec2__network_interface implements IResource {
-        id: Int!
-        uri: String!
-
-        # Aassociation ?
-        alti__description: String!
-        alti__interface_type: String!
-        alti__mac_address: String!
-        alti__private_dns_name: String
-        alti__private_ip_address: String
-        alti__status: String!
-        security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
-        # SubnetId 
-        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-    }
-
-    type ec2__security_group implements IResource {
-        id: Int!
-        uri: String!
-
-        alti__name: String!
-        ingress_rules: [alti__ingress_rule] @relation(name: "alti__ingress_rule", direction: OUT)
-    }
-
-    type ec2__vpc implements IResource {
-        id: Int!
-        uri: String!
-        account: aws__account @relation(name: "alti__account", direction: OUT)
-        region: aws__region @relation(name: "alti__region", direction: OUT)
-
-        alti__is_default: String!
-        alti__cidr_block: String!
-        alti__state: String!
-        tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
-
-        network_interfaces: [ec2__network_interface] @relation(name: "alti__vpc", direction: IN)
-        # Subnets
-    }
-
-    type elb__loadbalancer { #implements IResource {
-        # id: Int! # Not sure why but id remains null
-        uri: String!
-        account: aws__account @relation(name: "alti__account", direction: OUT)
-        region: aws__region @relation(name: "alti__region", direction: OUT)
+# MATCH (m:Resource)-[r]->(n:ec2__instance)
+# RETURN DISTINCT TYPE(r), LABELS(m)
 
 
-        alti__dns_name: String!
-        alti__created_time: String!
-        alti__load_balancer_name: String!
-        alti__scheme: String!
-        # alti__vpc_id: String
-        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-        # Subnets
-        alti__type: String!
-        security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
-        alti__ip_address_type: String!
-        alti__access_logs_enabled: String! # TODO: Map to Boolean
-        # AccessLogsS3Bucket
-        # AccessLogsS3Prefix
-        instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT)
-    }
 
-    type elbv2__loadbalancer { #implements IResource {
-        # id: Int! # Not sure why but id remains null
-        uri: String!
-        account: aws__account @relation(name: "alti__account", direction: OUT)
-        region: aws__region @relation(name: "alti__region", direction: OUT)
+interface IResource {
+    uri: String!
+}
 
-        alti__dns_name: String!
-        alti__created_time: String!
-        alti__load_balancer_name: String!
-        alti__scheme: String!
-        # alti__vpc_id: String
-        vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-        # State
-        alti__type: String!
-        # AvailabilityZones
-        security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
-        alti__ip_address_type: String!
-        alti__access_logs_enabled: String! # TODO: Map to Boolean
-        # AccessLogsS3Bucket
-        # AccessLogsS3Prefix
-    }
+# altimeter/aws/resource/resource_spec.py
+type Resource implements IResource {
+    uri: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+}
 
-    type lambda__function { # implements IResource {
-        # id: Int!
-        uri: String!
-        account: aws__account @relation(name: "alti__account", direction: OUT)
-        region: aws__region @relation(name: "alti__region", direction: OUT)
+# altimeter/aws/resource/account.py
+type aws__account implements IResource {
+    alti__id: String!
+    uri: String!
+    resources: [Resource] @relation(name: "alti__account", direction: IN) # TODO: Useful?
 
-        alti__id: String!
-        alti__function_name: String!
-        alti__runtime: String!
+    alti__account_id: String!
+    name: String! @neo4j_ignore
 
-        # VpcConfig
-    }
+    vpcs: [ec2__vpc] @relation(name: "alti__account", direction: IN)
+    ec2_instances: [ec2__instance] @relation(name: "alti__account", direction: IN)
+    lambda_functions: [lambda__function] @relation(name: "alti__account", direction: IN)
+}
 
-    type s3__bucket implements IResource {
-        id: Int!
-        uri: String!
+#
+# awslambda ###################################################################
+# 
+type lambda__function implements IResource {
+    alti__id: String!
+    uri: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
 
-        alti__name: String!
-        alti__creation_date: String!
-        server_side_default_encryption_rules: [alti__server_side_default_encryption_rule] @relation(name: "alti__server_side_default_encryption_rule", direction: OUT)
-        tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
-    }
+    alti__function_name: String!
+    alti__runtime: String!
 
-    type alti__server_side_default_encryption_rule implements IResource {
-        id: Int!
-        uri: String!
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    assume_role_policy_document: alti__assume_role_policy_document @relation(name:"alti__assume_role_policy_document", direction: OUT)
+}
 
-        alti__algorithm: String!
-        # keys doesn't seem right yet
-        # keys: [kms__key] @relation(name: "alti__key", direction: OUT)
-    }
+#
+# ec2 ########################################################################
+#
+# altimeter/aws/resource/ec2/region.py
+type aws__region implements IResource {
+    alti__id: String!
+    uri: String!
+    resources: [Resource] @relation(name: "alti__account", direction: IN) # TODO: Useful?
 
-    # type kms__key implements IResource {
-    #     id: Int!
-    #     uri: String!
+    alti__name: String
+    alti__opt_in_status: String
 
-    #     alti__key_id: String!
-    # }
+    ec2__instances: [ec2__instance] @relation(name: "alti__region", direction: IN)
+    lambda_functions: [lambda__function] @relation(name: "alti__account", direction: IN)
+}    
 
-    type alti__ingress_rule implements IResource {
-        id: Int!
-        uri: String!
+type ec2__instance implements IResource {
+    # ImageId
+    # Placement ??
+    # VpcId
+    # SubnetId
+    # IamInstanceProfile
 
-        alti__ip_protocol: String!
-        alti__from_port: Int!
-        alti__to_port: Int!
-        ip_ranges: [alti__ip_range] @relation(name: "alti__ip_range", direction: OUT)
-    }
+    id: Int!
+    uri: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
 
-    type alti__ip_range implements IResource {
-        id: Int!
-        uri: String!
+    alti__ami_id: String!
+    alti__ami_name: String!
+    alti__availability_zone: String
+    alti__instance_type: String!
+    alti__id: String!
+    alti__key_name: String
+    alti__launch_time: DateTime!
+    alti__name: String
+    alti__platform: String
+    alti__private_dns_name: String
+    alti__private_ip_address: String
+    alti__public_dns_name: String
+    alti__public_ip_address: String
+    alti__state: String!
+    alti__tenancy: String!
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+    security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+    network_interfaces: [ec2__network_interface] @relation(name: "alti__network_interface", direction: OUT)
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    # Subnets
+}
 
-        alti__cidr_ip: String!
-        alti__first_ip: Int!
-        alti__last_ip: Int!
-    }
+type ec2__network_interface implements IResource {
+    id: Int!
+    uri: String!
+
+    # Aassociation ?
+    alti__description: String!
+    alti__interface_type: String!
+    alti__mac_address: String!
+    alti__private_dns_name: String
+    alti__private_ip_address: String
+    alti__status: String!
+    security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+    # SubnetId 
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+}
+
+type ec2__security_group implements IResource {
+    alti__id: String!
+    uri: String!
+
+    alti__name: String!
+    ingress_rules: [alti__ingress_rule] @relation(name: "alti__ingress_rule", direction: OUT)
+}
+
+type ec2__vpc implements IResource {
+    id: Int!
+    uri: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    alti__is_default: String!
+    alti__cidr_block: String!
+    alti__state: String!
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+
+    network_interfaces: [ec2__network_interface] @relation(name: "alti__vpc", direction: IN)
+    # Subnets
+}
+
+#
+# iam ###################################################################
+# part of altimeter/aws/resource/iam/role.py
+type alti__assume_role_policy_document implements IResource {
+    uri: String!
+
+    alti__version: String!
+    statements: [alti__statement] @relation(name: "alti__statement", direction: OUT)
+}
+
+# part of altimeter/aws/resource/iam/role.py
+type alti__statement implements IResource {
+    uri: String!
+
+    alti__action: String!
+    alti__effect: String!
+    
+    principal: alti__principal @relation(name: "alti__principal", direction: OUT)
+}
+
+# part of altimeter/aws/resource/iam/role.py
+type alti__principal implements IResource {
+    uri: String!
+
+    alti__aws: String
+    alti__federated: String
+}
+
+type iam__instance_profile implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+
+    alti__name: String!
+
+    roles: [iam__role] @relation(name:"alti__attached_role", direction: OUT)
+
+    ec2_instances: [ec2__instance] @relation(name:"alti__instance_profile", direction: IN)
+}
+
+type iam__policy implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    
+    alti__name: String!
+    alti__policy_id: String!
+    alti__default_version_id: String
+    alti__default_version_policy_document_text: String
+
+    role: iam__role @relation(name:"alti__attached_policy", direction: IN)
+}
+
+# altimeter/aws/resource/iam/role.py
+type iam__role implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    
+    alti__name: String!
+    alti__max_session_duration: Int!
+    alti__description: String
+    alti__assume_role_policy_document_text: String!
+
+    alti__attached_policy: [iam__policy] @relation(name:"alti__attached_policy", direction: OUT)
+    alti__assume_role_policy_document: [alti__assume_role_policy_document] @relation(name:"alti__assume_role_policy_document", direction: OUT)
+
+    instance_profiles: [iam__instance_profile] @relation(name:"alti__attached_role", direction: IN)
+
+}
+
+#
+# elb ###################################################################
+# 
+type elb__loadbalancer { #implements IResource {
+    # id: Int! # Not sure why but id remains null
+    uri: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
 
 
-    type alti__tag implements IResource {
-        id: Int!
-        uri: String!
+    alti__dns_name: String!
+    alti__created_time: String!
+    alti__load_balancer_name: String!
+    alti__scheme: String!
+    # alti__vpc_id: String
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    # Subnets
+    alti__type: String!
+    security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+    alti__ip_address_type: String!
+    alti__access_logs_enabled: String! # TODO: Map to Boolean
+    # AccessLogsS3Bucket
+    # AccessLogsS3Prefix
+    instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT)
+}
 
-        alti__key: String!
-        alti__value: String
-        ec2__instances: [ec2__instance] @relation(name: "alti__tag", direction: IN)
-    }
+type elbv2__loadbalancer { #implements IResource {
+    # id: Int! # Not sure why but id remains null
+    uri: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
 
-    type Query {
-        internet_exposed_ec2_instances: [ec2__instance]!
-        internet_exposed_elb_loadbalancers: [elb__loadbalancer]!
-        internet_exposed_elbv2_loadbalancers: [elbv2__loadbalancer]!
-        sample_my_resources: [Resource]!
-        sample_regions_with_ec2: [aws__region]!
-    }
+    alti__dns_name: String!
+    alti__created_time: String!
+    alti__load_balancer_name: String!
+    alti__scheme: String!
+    # alti__vpc_id: String
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    # State
+    alti__type: String!
+    # AvailabilityZones
+    security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+    alti__ip_address_type: String!
+    alti__access_logs_enabled: String! # TODO: Map to Boolean
+    # AccessLogsS3Bucket
+    # AccessLogsS3Prefix
+}
+
+type s3__bucket implements IResource {
+    id: Int!
+    uri: String!
+
+    alti__name: String!
+    alti__creation_date: String!
+    server_side_default_encryption_rules: [alti__server_side_default_encryption_rule] @relation(name: "alti__server_side_default_encryption_rule", direction: OUT)
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+}
+
+type alti__server_side_default_encryption_rule implements IResource {
+    id: Int!
+    uri: String!
+
+    alti__algorithm: String!
+    # keys doesn't seem right yet
+    # keys: [kms__key] @relation(name: "alti__key", direction: OUT)
+}
+
+# type kms__key implements IResource {
+#     id: Int!
+#     uri: String!
+
+#     alti__key_id: String!
+# }
+
+type alti__ingress_rule implements IResource {
+    id: Int!
+    uri: String!
+
+    alti__ip_protocol: String!
+    alti__from_port: Int!
+    alti__to_port: Int!
+    ip_ranges: [alti__ip_range] @relation(name: "alti__ip_range", direction: OUT)
+}
+
+type alti__ip_range implements IResource {
+    id: Int!
+    uri: String!
+
+    alti__cidr_ip: String!
+    alti__first_ip: Int!
+    alti__last_ip: Int!
+}
+
+
+type alti__tag implements IResource {
+    id: Int!
+    uri: String!
+
+    alti__key: String!
+    alti__value: String
+    ec2__instances: [ec2__instance] @relation(name: "alti__tag", direction: IN)
+}
+
+type Query {
+    internet_exposed_ec2_instances: [ec2__instance]!
+    internet_exposed_elb_loadbalancers: [elb__loadbalancer]!
+    internet_exposed_elbv2_loadbalancers: [elbv2__loadbalancer]!
+    sample_my_resources: [Resource]!
+    sample_regions_with_ec2: [aws__region]!
+}
