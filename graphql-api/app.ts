@@ -18,6 +18,16 @@ const accountNames:any = JSON.parse(fs.readFileSync('./accounts.json','utf-8'))
 
 // TODO: Move to separate module
 const resolvers = {
+
+    alti__metadata: {
+        // TODO: Use full custom resolver so that alti__start/end_time doesn't need to be requested by client.
+        start_timestamp_utc(parent:any) {
+            return new Date(parent.alti__start_time*1000).toISOString();
+        },
+        end_timestamp_utc(parent:any) {
+            return new Date(parent.alti__end_time*1000).toISOString();
+        }
+    },
     aws__account: {
         name(parent:any) {
             return (parent.alti__account_id) ? accountNames[parent.alti__account_id] || `[${parent.alti__account_id} UNKNOWN]` : "[need alti__account_id]"

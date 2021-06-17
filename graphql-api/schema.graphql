@@ -18,6 +18,14 @@ interface IResource {
     uri: String!
 }
 
+# altimeter/core/graph/graph_set.py
+type alti__metadata {
+    alti__start_time: Int!
+    alti__end_time: Int!
+    start_timestamp_utc: String! @neo4j_ignore
+    end_timestamp_utc: String! @neo4j_ignore
+}
+
 # altimeter/aws/resource/resource_spec.py
 type Resource implements IResource {
     uri: String!
@@ -89,7 +97,7 @@ type ec2__instance implements IResource {
     alti__instance_type: String!
     alti__id: String!
     alti__key_name: String
-    alti__launch_time: DateTime!
+    alti__launch_time: String! #DateTime!
     alti__name: String
     alti__platform: String
     alti__private_dns_name: String
