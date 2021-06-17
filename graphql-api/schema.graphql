@@ -51,8 +51,8 @@ type aws__account implements IResource {
 # awslambda ###################################################################
 # 
 type lambda__function implements IResource {
-    alti__id: String!
     uri: String!
+    alti__id: String!
     account: aws__account @relation(name: "alti__account", direction: OUT)
     region: aws__region @relation(name: "alti__region", direction: OUT)
 
@@ -60,7 +60,35 @@ type lambda__function implements IResource {
     alti__runtime: String!
 
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-    assume_role_policy_document: alti__assume_role_policy_document @relation(name:"alti__assume_role_policy_document", direction: OUT)
+    # TODO: Role??
+}
+
+#
+# cloudtrail: TODO ###################################################################
+
+#
+# dynamodb ###################################################################
+type dynamodb__table implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    alti__name: String!
+    alti__table_status: String!
+    alti__creation_date_time: String!
+    alti__table_size_bytes: Int!
+    alti__item_count: Int!
+    alti__table_id: String!
+    alti__number_of_decreases_today: Int!
+    alti__read_capacity_units: Int!
+    alti__write_capacity_units: Int!
+    alti__billing_mode: String
+    alti__last_update_to_pay_per_request_date_time: String
+    alti__continuous_backups_status: String!
+    alti__latest_restorable_date_time: String
+    alti__earliest_restorable_date_time: String
+    alti__point_in_time_recovery_status: String
 }
 
 #
