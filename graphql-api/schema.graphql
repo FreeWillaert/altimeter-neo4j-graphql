@@ -366,22 +366,64 @@ type ec2__snapshot implements IResource {
 # altimeter/aws/resource/ec2/subnet.py
 type ec2__subnet implements IResource {
     uri: String!
-    # TODO
-}
-
-type ec2__vpc implements IResource {
-    uri: String!
+    alti__id: String!
     account: aws__account @relation(name: "alti__account", direction: OUT)
     region: aws__region @relation(name: "alti__region", direction: OUT)
 
-    alti__is_default: String!
     alti__cidr_block: String!
+    alti__first_ip: String! # Not always a proper 32bit signed int?
+    alti__last_ip: String! # Not always a proper 32bit signed int?
     alti__state: String!
+
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
     tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
 
-    network_interfaces: [ec2__network_interface] @relation(name: "alti__vpc", direction: IN)
-    # Subnets
+    instances: [ec2__instance] @relation(name: "alti__subnet", direction: IN)
+    network_interfaces: [ec2__network_interface] @relation(name: "alti__subnet", direction: IN)
+    # TODO: The plural is a bug in altimeter?
+    availability_zones: [alti__availability_zones] @relation(name: "alti__subnet", direction: IN)
+    loadbalancers: [elb__loadbalancer] @relation(name: "alti__subnet", direction: IN)
 }
+
+# altimeter/aws/resource/ec2/transit_gateway_vpc_attachment.py
+type ec2__transit_gateway_vpc_attachment implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    # TODO: Make relationships out of ids to other resources??
+    alti__transit_gateway_attachment_id: String!
+    alti__transit_gateway_id: String!
+    alti__vpc_id: String!
+    alti__vpc_owner_id: String!
+    alti__state: String!
+    alti__creation_time: String!
+    alti__dns_support: String!
+    alti__ipv6_support: String!
+    alti__subnet_id: String! # TODO: Isn't this a list?    
+}
+
+# altimeter/aws/resource/ec2/transit_gateway.py
+type ec2__transit_gateway implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    # TODO: Verify against actual example
+    alti__owner_id: String!
+    alti__state: String!
+
+    # TODO: vpc_attachment
+
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+}
+
+# altimeter/aws/resource/ec2/vpc_endpoint_service.py TODO
+# altimeter/aws/resource/ec2/vpc_endpoint.py TODO
+# altimeter/aws/resource/ec2/vpc_peering_connection.py TODO
+
 
 type ec2__volume implements IResource {
     uri: String!
@@ -401,6 +443,32 @@ type ec2__volume implements IResource {
 
     snapshots: [ec2__snapshot] @relation(name: "alti__volume", direction: IN) # TODO: Verify this exists
    
+}
+
+# altimeter/aws/resource/ec2/vpc.py
+type ec2__vpc implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    alti__is_default: String!
+    alti__cidr_block: String!
+    alti__state: String!
+
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+
+    attachments: [alti__attachment] @relation(name: "alti__vpc", direction: IN)
+    # flow_logs: [ec2__flow_log] @relation(name: "alti__vpc", direction: IN) TODO
+    ec2_instances: [ec2__instance] @relation(name: "alti__vpc", direction: IN)
+    network_interfaces: [ec2__network_interface] @relation(name: "alti__vpc", direction: IN)
+    route_tables: [ec2__route_table] @relation(name: "alti__vpc", direction: IN)
+    subnets: [ec2__subnet] @relation(name: "alti__vpc", direction: IN)
+    # vpc_endpoints: [ec2__vpc_endpoint] @relation(name: "alti__vpc", direction: IN) TODO
+    elb_loadbalancers: [elb__loadbalancer] @relation(name: "alti__vpc", direction: IN)
+    elbv2_loadbalancers: [elbv2__loadbalancer] @relation(name: "alti__vpc", direction: IN)
+    # elbv2_targetgroups: [elbv2__targetgroup] @relation(name: "alti__vpc", direction: IN) TODO
+    lambda_functions: [lambda__function] @relation(name: "alti__vpc", direction: IN)
 }
 
 #
@@ -500,9 +568,10 @@ type elb__loadbalancer { #implements IResource {
     instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT)
 }
 
-type elbv2__loadbalancer { #implements IResource {
-    # id: Int! # Not sure why but id remains null
+# altimeter/aws/resource/elbv2/load_balancer.py
+type elbv2__loadbalancer implements IResource {
     uri: String!
+    alti__id: String! # TODO: Check this is ok
     account: aws__account @relation(name: "alti__account", direction: OUT)
     region: aws__region @relation(name: "alti__region", direction: OUT)
 
@@ -514,12 +583,22 @@ type elbv2__loadbalancer { #implements IResource {
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
     # State
     alti__type: String!
-    # AvailabilityZones
+    availability_zones: [alti__availability_zones] @relation(name: "alti__availability_zones", direction: OUT)
     security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
     alti__ip_address_type: String!
     alti__access_logs_enabled: String! # TODO: Map to Boolean
     # AccessLogsS3Bucket
     # AccessLogsS3Prefix
+}
+
+# part of altimeter/aws/resource/elbv2/load_balancer.py
+type alti__availability_zones implements IResource {
+    uri: String!
+
+    subnet: ec2__subnet @relation(name: "alti__subnet", direction: OUT)
+
+    loadbalancer: elbv2__loadbalancer @relation(name: "alti__availability_zones", direction: IN)
+
 }
 
 type s3__bucket implements IResource {
