@@ -308,8 +308,8 @@ type alti__ip_range implements IResource {
     uri: String!
 
     alti__cidr_ip: String!
-    alti__first_ip: Int!
-    alti__last_ip: Int!
+    alti__first_ip: String! # Not always a proper 32bit signed int?
+    alti__last_ip: String! # Not always a proper 32bit signed int?
 
     ingress_rules: [alti__ingress_rule] @relation(name:"alti__ip_range", direction: IN)
     egress_rules: [alti__egress_rule] @relation(name:"alti__ip_range", direction: IN)
@@ -319,8 +319,8 @@ type alti__ipv6_range implements IResource {
     uri: String!
 
     alti__cidr_ipv6: String!
-    alti__first_ip: Int!
-    alti__last_ip: Int!
+    alti__first_ip: String! # Not always a proper 32bit signed int?
+    alti__last_ip: String! # Not always a proper 32bit signed int?
 
     ingress_rules: [alti__ingress_rule] @relation(name:"alti__ipv6_range", direction: IN)
     egress_rules: [alti__egress_rule] @relation(name:"alti__ipv6_range", direction: IN)
