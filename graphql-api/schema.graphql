@@ -257,14 +257,89 @@ type alti__route {
 }
 
 
-# altimeter/aws/resource/ec2/internet_gateway.py
+# altimeter/aws/resource/ec2/security_group.py
 type ec2__security_group implements IResource {
-    alti__id: String!
     uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
 
     alti__name: String!
+
     ingress_rules: [alti__ingress_rule] @relation(name: "alti__ingress_rule", direction: OUT)
+    egress_rules: [alti__egress_rule] @relation(name: "alti__egress_rule", direction: OUT)
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+
+    instances: [ec2__instance] @relation(name: "alti__security_group", direction: IN)
+    elb_load_balancers: [elb__loadbalancer] @relation(name: "alti__security_group", direction: IN)
+    elbv2_load_balancers: [elbv2__loadbalancer] @relation(name: "alti__security_group", direction: IN)
+    network_interfaces: [ec2__network_interface] @relation(name: "alti__security_group", direction: IN)
+    user_id_group_pairs: [alti__user_id_group_pairs] @relation(name: "alti__security_group", direction: IN)
+
 }
+
+type alti__ingress_rule implements IResource {
+    uri: String!
+
+    alti__ip_protocol: String!
+    alti__from_port: Int!
+    alti__to_port: Int!
+    ip_ranges: [alti__ip_range] @relation(name: "alti__ip_range", direction: OUT)
+    ipv6_ranges: [alti__ipv6_range] @relation(name: "alti__ipv6_range", direction: OUT)
+    user_id_group_pairs: [alti__user_id_group_pairs] @relation(name: "alti__security_group", direction: OUT)
+
+    security_group: ec2__security_group @relation(name:"alti__ingress_rule", direction: IN)
+}
+
+type alti__egress_rule implements IResource {
+    uri: String!
+
+    alti__ip_protocol: String!
+    alti__from_port: Int!
+    alti__to_port: Int!
+    ip_ranges: [alti__ip_range] @relation(name: "alti__ip_range", direction: OUT)
+    ipv6_ranges: [alti__ipv6_range] @relation(name: "alti__ipv6_range", direction: OUT)
+    user_id_group_pairs: [alti__user_id_group_pairs] @relation(name: "alti__security_group", direction: OUT)
+
+    security_group: ec2__security_group @relation(name:"alti__egress_rule", direction: IN)
+}
+
+type alti__ip_range implements IResource {
+    uri: String!
+
+    alti__cidr_ip: String!
+    alti__first_ip: Int!
+    alti__last_ip: Int!
+
+    ingress_rules: [alti__ingress_rule] @relation(name:"alti__ip_range", direction: IN)
+    egress_rules: [alti__egress_rule] @relation(name:"alti__ip_range", direction: IN)
+}
+
+type alti__ipv6_range implements IResource {
+    uri: String!
+
+    alti__cidr_ipv6: String!
+    alti__first_ip: Int!
+    alti__last_ip: Int!
+
+    ingress_rules: [alti__ingress_rule] @relation(name:"alti__ipv6_range", direction: IN)
+    egress_rules: [alti__egress_rule] @relation(name:"alti__ipv6_range", direction: IN)
+}
+
+type alti__user_id_group_pairs implements IResource {
+    uri: String!
+
+    alti__account_id: String! # TODO: Is this account id or user id? (cf code)
+    alti__peering_status: String
+    alti__vpc_id: String
+    alti__vpc_peering_connection_id: String
+
+    security_group: ec2__security_group @relation(name:"alti__security_group", direction: OUT)
+
+    ingress_rules: [alti__ingress_rule] @relation(name:"alti__user_id_group_pairs", direction: IN)
+    egress_rules: [alti__egress_rule] @relation(name:"alti__user_id_group_pairs", direction: IN)
+}
+
 
 type ec2__subnet implements IResource {
     uri: String!
@@ -435,26 +510,6 @@ type alti__server_side_default_encryption_rule implements IResource {
 
 #     alti__key_id: String!
 # }
-
-type alti__ingress_rule implements IResource {
-    id: Int!
-    uri: String!
-
-    alti__ip_protocol: String!
-    alti__from_port: Int!
-    alti__to_port: Int!
-    ip_ranges: [alti__ip_range] @relation(name: "alti__ip_range", direction: OUT)
-}
-
-type alti__ip_range implements IResource {
-    id: Int!
-    uri: String!
-
-    alti__cidr_ip: String!
-    alti__first_ip: Int!
-    alti__last_ip: Int!
-}
-
 
 type alti__tag implements IResource {
     id: Int!
