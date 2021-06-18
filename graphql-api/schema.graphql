@@ -158,6 +158,34 @@ type ec2__instance implements IResource {
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
 }
 
+# altimeter/aws/resource/ec2/internet_gateway.py
+type ec2__internet_gateway implements IResource {
+
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    alti__owner_id: String!
+
+    attachments: [alti__attachment] @relation(name: "alti__attachment", direction: OUT)
+    tags: [alti__tag] @relation(name: "alti__tag", direction: OUT)
+}
+
+# part of altimeter/aws/resource/ec2/internet_gateway.py
+type alti__attachment {
+    uri: String!
+    
+    alti__attach_time: String
+    alti__state: String!
+    alti__delete_on_termination: String # TODO: where does this come from?
+
+    instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT) # TODO: where does this come from?
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    volumes: [ec2__volume] @relation(name:"alti__attachment", direction: IN)
+    internet_gateways: [ec2__internet_gateway] @relation(name:"alti__attachment", direction: IN) # TODO: one or more?
+}
+
 type ec2__network_interface implements IResource {
     id: Int!
     uri: String!
@@ -200,6 +228,11 @@ type ec2__vpc implements IResource {
 
     network_interfaces: [ec2__network_interface] @relation(name: "alti__vpc", direction: IN)
     # Subnets
+}
+
+type ec2__volume implements IResource {
+    uri: String!
+    # TODO
 }
 
 #
