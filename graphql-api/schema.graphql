@@ -183,25 +183,81 @@ type alti__attachment {
     instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT) # TODO: where does this come from?
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
     volumes: [ec2__volume] @relation(name:"alti__attachment", direction: IN)
-    internet_gateways: [ec2__internet_gateway] @relation(name:"alti__attachment", direction: IN) # TODO: one or more?
+    internet_gateway: ec2__internet_gateway @relation(name:"alti__attachment", direction: IN)
 }
 
+# altimeter/aws/resource/ec2/network_interface.py
 type ec2__network_interface implements IResource {
-    id: Int!
     uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
 
-    # Aassociation ?
     alti__description: String!
     alti__interface_type: String!
     alti__mac_address: String!
     alti__private_dns_name: String
     alti__private_ip_address: String
+    alti__public_dns_name: String
+    alti__public_ip: String
     alti__status: String!
     security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
-    # SubnetId 
+    subnet: ec2__subnet @relation(name:"alti__subnet", direction: OUT)
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    instances: ec2__instance @relation(name: "alti__network_interface", direction: IN)
+}
+
+# altimeter/aws/resource/ec2/route_table.py
+type ec2__route_table implements IResource {
+    uri: String!
+    alti__id: String!
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    alti__owner_id: String!
+    alti__route_table_id: String!
+
+    # TODO: propagating_vgws
+    associations: [alti__association] @relation(name: "alti__association", direction: OUT)
+    routes: [alti__route] @relation(name: "alti__route", direction: OUT)
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
 }
 
+# part of altimeter/aws/resource/ec2/route_table.py
+type alti__association {
+    uri: String!
+
+    alti__main: String
+    alti__route_table_id: String
+    alti__subnet_id: String
+    alti__route_table_association_id: String
+
+    route_table: ec2__route_table @relation(name:"alti__association", direction: IN)
+}
+
+# part of altimeter/aws/resource/ec2/route_table.py
+type alti__route {
+    uri: String!
+
+    alti__destination_cidr_block: String
+    alti__destination_ipv6_cidr_block: String
+    alti__destination_prefix_list_id: String
+    alti__egress_only_internet_gateway_id: String
+    alti__gateway_id: String
+    alti__instance_id: String
+    alti__instance_owner_id: String
+    alti__nat_gateway_id: String
+    alti__transit_gateway_id: String
+    alti__network_interface_id: String
+    alti__origin: String
+    alti__state: String
+    alti__vpc_peering_connection_id: String
+    
+    route_table: ec2__route_table @relation(name:"alti__route", direction: IN)
+}
+
+
+# altimeter/aws/resource/ec2/internet_gateway.py
 type ec2__security_group implements IResource {
     alti__id: String!
     uri: String!
