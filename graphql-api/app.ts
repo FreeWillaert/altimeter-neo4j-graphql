@@ -4,14 +4,15 @@ import * as AWS from 'aws-sdk'
 
 import * as neo4j from 'neo4j-driver'
 import { makeAugmentedSchema, neo4jgraphql } from 'neo4j-graphql-js'
-import { Config } from 'apollo-server'
+import { Config, decorateWithLogger } from 'apollo-server'
 import { ApolloServer } from 'apollo-server-lambda'
 
-const sm =  new AWS.SecretsManager({region: "eu-west-1"});
+const sm =  new AWS.SecretsManager({region: "eu-west-1"})
 
-const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8');
+const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8')
 
 let driver: neo4j.Driver
+let theHandler: any = null
 
 // TODO: Get account names json through http request
 const accountNames:any = JSON.parse(fs.readFileSync('./accounts.json','utf-8'))
@@ -22,10 +23,10 @@ const resolvers = {
     alti__metadata: {
         // TODO: Use full custom resolver so that alti__start/end_time doesn't need to be requested by client.
         start_timestamp_utc(parent:any) {
-            return new Date(parent.alti__start_time*1000).toISOString();
+            return new Date(parent.alti__start_time*1000).toISOString()
         },
         end_timestamp_utc(parent:any) {
-            return new Date(parent.alti__end_time*1000).toISOString();
+            return new Date(parent.alti__end_time*1000).toISOString()
         }
     },
     aws__account: {
@@ -185,11 +186,33 @@ export async function createServerConfig(): Promise<Config> {
     }
 }
 
+async function getCurrentHandler(): Promise<any> {
+    if(!theHandler) return null // upon initialization, just return null and a handler will be created
+
+    // from here on, theHandler is not null so it has been initialized; as long as the driver says we're good, we continue to use the existing handler
+    try {
+        const serverInfo = await driver.verifyConnectivity({database: "neo4j"});
+        console.log("neo4j server info: ", serverInfo)
+        return theHandler
+    } catch(error) {
+        // handler was initialized before but driver can no longer connect to neo4j, so return null and have a new handler created 
+        console.log("driver no longer connected - will try to establish a new connection");
+        return null
+    }    
+}
+
 const createHandler = async () => {
     try {
-        const serverConfig = await createServerConfig()
-        const server = new ApolloServer(serverConfig); // This is the 'lambda' ApolloServer!
-        return server.createHandler();
+        let handler = await getCurrentHandler()
+
+        if(!handler) {
+            const serverConfig = await createServerConfig()
+            const server = new ApolloServer(serverConfig); // This is the 'lambda' ApolloServer!
+            handler = server.createHandler();
+            theHandler = handler
+        }
+
+        return handler
     }
     catch(error) {
         console.error(error)
