@@ -111,9 +111,11 @@ class DetectorResourceSpec(GuardDutyResourceSpec):
             for member_resp in member_resps:
                 member_account_id = member_resp["AccountId"]
                 member_detector_id = member_resp["DetectorId"]
-                member_email = member_resp["Email"]
+                # member_email = member_resp["Email"]
+                member_email = member_resp.get("Email","[NONE]")
                 member_relationship_status = member_resp["RelationshipStatus"]
-                member_invited_at = member_resp["InvitedAt"]
+                # member_invited_at = member_resp["InvitedAt"]
+                member_invited_at = member_resp.get("InvitedAt","[NONE]")
                 member_updated_at = member_resp["UpdatedAt"]
                 member_detector_arn = cls.generate_arn(
                     account_id=member_account_id, region=region, resource_id=member_detector_id,
