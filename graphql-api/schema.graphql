@@ -472,6 +472,12 @@ type ec2__vpc implements IResource {
 }
 
 #
+# eks TODO ###################################################################
+#
+
+
+
+#
 # iam ###################################################################
 # part of altimeter/aws/resource/iam/role.py
 type alti__assume_role_policy_document implements IResource {
@@ -543,11 +549,12 @@ type iam__role implements IResource {
 }
 
 #
-# elb ###################################################################
+# elbv1 ###################################################################
+# altimeter/aws/resource/elbv1/load_balancer.py
 # 
-type elb__loadbalancer { #implements IResource {
-    # id: Int! # Not sure why but id remains null
+type elb__loadbalancer implements IResource {
     uri: String!
+    alti__id: String!
     account: aws__account @relation(name: "alti__account", direction: OUT)
     region: aws__region @relation(name: "alti__region", direction: OUT)
 
@@ -556,18 +563,20 @@ type elb__loadbalancer { #implements IResource {
     alti__created_time: String!
     alti__load_balancer_name: String!
     alti__scheme: String!
-    # alti__vpc_id: String
-    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-    # Subnets
     alti__type: String!
-    security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
     alti__ip_address_type: String!
-    alti__access_logs_enabled: String! # TODO: Map to Boolean
-    # AccessLogsS3Bucket
-    # AccessLogsS3Prefix
+    alti__access_logs_enabled: Boolean!
+    alti__access_logs_s3_prefix: String
+
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
+    subnets: [ec2__subnet] @relation(name:"alti__subnet", direction: OUT)
+    security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
+    access_logs_s3_bucket: s3__bucket @relation(name:"access_logs_s3_bucket", direction: OUT)
     instances: [ec2__instance] @relation(name: "alti__instance", direction: OUT)
 }
 
+#
+# elbv2 ###################################################################
 # altimeter/aws/resource/elbv2/load_balancer.py
 type elbv2__loadbalancer implements IResource {
     uri: String!
@@ -579,16 +588,18 @@ type elbv2__loadbalancer implements IResource {
     alti__created_time: String!
     alti__load_balancer_name: String!
     alti__scheme: String!
-    # alti__vpc_id: String
-    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
-    # State
+    alti__load_balancer_state: String!
     alti__type: String!
+    alti__ip_address_type: String!
+    alti__access_logs_enabled: Boolean!
+    alti__access_logs_s3_prefix: String
+
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
     availability_zones: [alti__availability_zones] @relation(name: "alti__availability_zones", direction: OUT)
     security_groups: [ec2__security_group] @relation(name: "alti__security_group", direction: OUT)
-    alti__ip_address_type: String!
-    alti__access_logs_enabled: String! # TODO: Map to Boolean
-    # AccessLogsS3Bucket
-    # AccessLogsS3Prefix
+    access_logs_s3_bucket: s3__bucket @relation(name:"access_logs_s3_bucket", direction: OUT)
+
+    targetgroups: elbv2__targetgroup @relation(name: "alti__loadbalancer", direction: IN)
 }
 
 # part of altimeter/aws/resource/elbv2/load_balancer.py
@@ -598,6 +609,39 @@ type alti__availability_zones implements IResource {
     subnet: ec2__subnet @relation(name: "alti__subnet", direction: OUT)
 
     loadbalancer: elbv2__loadbalancer @relation(name: "alti__availability_zones", direction: IN)
+}
+
+# part of altimeter/aws/resource/elbv2/target_group.py
+type elbv2__targetgroup implements IResource {
+    uri: String!
+    alti__id: String! # TODO: Check this is ok
+    account: aws__account @relation(name: "alti__account", direction: OUT)
+    region: aws__region @relation(name: "alti__region", direction: OUT)
+
+    alti__target_group_name: String!
+    alti__protocol: String
+    alti__port: Int
+    alti__health_check_protocol: String
+    alti__health_check_port: String
+    alti__health_check_enabled: Boolean!
+    alti__target_type: String
+
+    vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT) # TODO: Check why this seems to appear 'double' in Neo4j?
+    loadbalancers: [elbv2__loadbalancer] @relation(name: "alti__loadbalancer", direction: OUT)
+    target_health_descriptions: [alti__target_health_descriptions] @relation(@name: "alti__target_health_descriptions", direction: OUT)
+}
+
+# part of altimeter/aws/resource/elbv2/target_group.py
+type alti__target_health_descriptions {
+    uri: String!
+
+    alti__target_id: String!
+    alti__target_port: String
+    alti__target_az: String
+    alti__health_check_port: String
+    alti__state: String!
+    alti__reason: String
+    alti__description: String
 
 }
 
