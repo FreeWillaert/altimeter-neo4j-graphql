@@ -10,5 +10,7 @@ __pycache__
 .cdk.staging
 cdk.out
 config.json
+config_local.json
+config_audit.json
 
 node_modules

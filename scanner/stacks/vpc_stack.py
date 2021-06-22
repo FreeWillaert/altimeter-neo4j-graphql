@@ -11,7 +11,7 @@ class VpcStack(cdk.Stack):
     def __init__(self, scope: cdk.Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        self.vpc = Vpc(self, "ec2-vpc-altimeter",
+        self.vpc = Vpc(self, "ec2-vpc-altimeter",            
             max_azs=1,
             subnet_configuration=[
                 SubnetConfiguration(
@@ -24,3 +24,4 @@ class VpcStack(cdk.Stack):
                 )
             ]
         )
+        cdk.Tags.of(self.vpc).add("Name", "vpc-audit--altimeter")

@@ -14,6 +14,7 @@ class GraphqlApiStack(cdk.Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         graphql_api_function = NodejsFunction(self, 'lambda-function-graphql-api',
+            function_name="function-altimeter--graphql-api",
             runtime=Runtime.NODEJS_12_X, # TODO: Check out if NODEJS_14_X also works with graphql handler.
             entry='../graphql-api/app.ts',
             memory_size=512, 
@@ -40,6 +41,7 @@ class GraphqlApiStack(cdk.Stack):
         neo4j_user_secret.grant_read(graphql_api_function.role)
 
         api = LambdaRestApi(self, 'apigateway-api-altimeter-graphql',
+            rest_api_name='api-altimeter--graphql-api',
             handler=graphql_api_function,            
             proxy=False
         )

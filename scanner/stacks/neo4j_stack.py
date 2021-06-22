@@ -30,16 +30,11 @@ class Neo4jStack(cdk.Stack):
                             actions=[
                                 'ec2:CreateTags',
                                 'ec2:Describe*',
-                                # 'ec2:CreateVolume',
-                                # 'ec2:AttachVolume',
                                 'elasticloadbalancing:Describe*',
                                 'cloudwatch:ListMetrics',
                                 'cloudwatch:GetMetricStatistics',
                                 'cloudwatch:Describe*',
                                 'autoscaling:Describe*',
-                                # 'route53:List*',
-                                # 'route53:Read*',
-                                # 'route53:ChangeResourceRecordSets'
                             ],
                             resources=["*"]
                         )
@@ -57,13 +52,12 @@ class Neo4jStack(cdk.Stack):
         )
 
         instance_security_group = SecurityGroup(self, "ec2-sg-neo4j-server-instance",
-            description="Neo4j Server Instance",
+            description="Altimeter Neo4j Server Instance",
             vpc=vpc
         )
 
-        # instance_security_group.add_ingress_rule(Peer.ipv4(vpc.vpc_cidr_block), Port.tcp(7687), 'Bolt from within own VPC')
         instance_security_group.add_ingress_rule(Peer.ipv4("0.0.0.0/0"), Port.tcp(7687), 'Bolt from ANYWHERE') # TESTING
-        instance_security_group.add_ingress_rule(Peer.ipv4("0.0.0.0/0"), Port.tcp(7473), 'Bolt from ANYWHERE') # TESTING
+        # instance_security_group.add_ingress_rule(Peer.ipv4("0.0.0.0/0"), Port.tcp(7473), 'Bolt from ANYWHERE') # TESTING
 
         # Prepare userdata script
         with open("./resources/neo4j-server-instance-userdata.sh", "r") as f:
@@ -75,7 +69,7 @@ class Neo4jStack(cdk.Stack):
         instance_type = InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MEDIUM)
 
         self.instance = Instance(self, 'ec2-instance-neo4j-server-instance',
-            instance_name="neo4j-community-standalone-server",
+            instance_name="instance-altimeter--neo4j-community-standalone-server",
             machine_image=MachineImage.generic_linux(
                 ami_map={
                     "eu-west-1": "ami-00c8631d384ad7c53"
@@ -85,7 +79,7 @@ class Neo4jStack(cdk.Stack):
             role=neo4j_server_instance_role,
             vpc=vpc,
             # vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Private').subnets),
-            vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Public').subnets), # TESTING
+            vpc_subnets=SubnetSelection(subnets=vpc.select_subnets(subnet_group_name='Public').subnets),
             security_group=instance_security_group,
             user_data=user_data,
             block_devices=[

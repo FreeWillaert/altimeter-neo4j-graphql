@@ -28,7 +28,7 @@ class ScannerStack(cdk.Stack):
         )
 
         cluster = Cluster(self, "ecs-cluster-altimeter", 
-            cluster_name="Altimeter",
+            cluster_name="ecsclstr-altimeter--default",
             vpc=vpc               
         )
 
@@ -42,7 +42,6 @@ class ScannerStack(cdk.Stack):
         )
 
         task_definition = FargateTaskDefinition(self, "ecs-fgtd-altimeter",
-            # execution_role=execution_role,
             task_role=task_role,
             memory_limit_mib=1024
         )
@@ -122,7 +121,9 @@ class ScannerStack(cdk.Stack):
         # Don't put Neo4j Importer lambda in a separate stack since it causes a circular reference with the S3 event source, and using an imported bucket as event source is not possible (you need a Bucket, not an IBucket)
 
 
-        neo4j_importer_function = PythonFunction(self, 'lambda-function-neo4j-importer', 
+
+        neo4j_importer_function = PythonFunction(self, 'lambda-function-neo4j-importer',
+            function_name="function-altimeter--neo4j-importer",             
             entry="../neo4j-importer",
             index="app.py",
             handler="lambda_handler",

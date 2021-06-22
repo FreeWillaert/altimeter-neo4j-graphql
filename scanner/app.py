@@ -15,9 +15,9 @@ app = cdk.App()
 
 config = read_config()
 
-vpc_stack = VpcStack(app, "AltimeterVpcStack", config)
-neo4j_stack = Neo4jStack(app, "AltimeterNeo4jStack", config, vpc_stack.vpc)
-scanner_stack = ScannerStack(app, "AltimeterScannerStack", config, vpc_stack.vpc, neo4j_stack.instance, neo4j_stack.neo4j_user_secret)
-graphql_api_stack = GraphqlApiStack(app,"AltimeterGraphqlApiStack", config, vpc_stack.vpc, neo4j_stack.instance, neo4j_stack.neo4j_user_secret)
+vpc_stack = VpcStack(app, "stack-altimeter--vpc", config)
+neo4j_stack = Neo4jStack(app, "stack-altimeter--neo4j", config, vpc_stack.vpc)
+scanner_stack = ScannerStack(app, "stack-altimeter--scanner", config, vpc_stack.vpc, neo4j_stack.instance, neo4j_stack.neo4j_user_secret)
+graphql_api_stack = GraphqlApiStack(app,"stack-altimeter--graphql-api", config, vpc_stack.vpc, neo4j_stack.instance, neo4j_stack.neo4j_user_secret)
 
 app.synth()
