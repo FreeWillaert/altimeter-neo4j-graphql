@@ -15,6 +15,8 @@ Control Tower places a guardrail "Guardrail: Disallow Changes to Encryption Conf
 
 To get around this, assume the 'AWSControlTowerExecution' role from a principal in the master account, and then bootstrap and deploy. 
 
+NOTE: Since CDK uses a CDK deploy role for executing the Cloudformation Stacks, this still fails. Therefore, encryption of the output S3 bucket is disabled (at least for now).
+
 
 # Welcome to this CDK Python project!
 
