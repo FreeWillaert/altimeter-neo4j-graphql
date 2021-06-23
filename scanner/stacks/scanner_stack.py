@@ -18,12 +18,15 @@ from aws_cdk.aws_secretsmanager import ISecret
 
 class ScannerStack(cdk.Stack):
 
+    MEMORY_LIMIT = 4096 # MB
+    CPU = 512 # Must be in accordance with memory limit.
+
     def __init__(self, scope: cdk.Construct, construct_id: str, config, vpc: IVpc, instance: IInstance, neo4j_user_secret: ISecret, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         bucket = Bucket(self, "s3-bucket-altimeter", 
             bucket_name=config["s3_bucket"],
-            encryption=BucketEncryption.S3_MANAGED,
+            encryption=BucketEncryption.UNENCRYPTED, #.S3_MANAGED, # Disable encryption since it's not really required and it conflicts with SCP guardrails set by Control Tower on the Audit account.
             block_public_access=BlockPublicAccess.BLOCK_ALL
         )
 
@@ -43,7 +46,8 @@ class ScannerStack(cdk.Stack):
 
         task_definition = FargateTaskDefinition(self, "ecs-fgtd-altimeter",
             task_role=task_role,
-            memory_limit_mib=1024
+            memory_limit_mib=self.MEMORY_LIMIT,
+            cpu=self.CPU
         )
 
         docker_path = os.path.join(os.path.curdir,"..")
@@ -55,8 +59,8 @@ class ScannerStack(cdk.Stack):
 
         task_definition.add_container("ecs-container-altimeter",            
             image= ContainerImage.from_docker_image_asset(image_asset),
-            memory_limit_mib=1024,
-            cpu=256,
+            # memory_limit_mib=self.MEMORY_LIMIT,
+            # cpu=self.CPU,
             environment= {
                 "CONFIG_PATH": config["altimeter_config_path"],
                 "S3_BUCKET": config["s3_bucket"]
