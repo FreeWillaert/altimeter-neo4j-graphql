@@ -201,7 +201,13 @@ export async function createServerConfig(): Promise<Config> {
     return {
         schema,
         plugins: [loggingPlugin],
-        context: { driver }
+        context: { driver },        
+        playground: {
+            endpoint: "/prod/graphql",
+            settings: {
+                'schema.polling.enable': false
+            }
+          }
     }
 }
 
