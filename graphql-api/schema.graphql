@@ -469,6 +469,8 @@ type ec2__vpc implements IResource {
     elbv2_loadbalancers: [elbv2__loadbalancer] @relation(name: "alti__vpc", direction: IN)
     # elbv2_targetgroups: [elbv2__targetgroup] @relation(name: "alti__vpc", direction: IN) TODO
     lambda_functions: [lambda__function] @relation(name: "alti__vpc", direction: IN)
+
+    name: String @neo4j_ignore
 }
 
 #
@@ -565,7 +567,7 @@ type elb__loadbalancer implements IResource {
     alti__scheme: String!
     alti__type: String!
     alti__ip_address_type: String!
-    alti__access_logs_enabled: Boolean!
+    alti__access_logs_enabled: String! # TODO: Check why this is stored as a string (e.g. "false", including the quotes)
     alti__access_logs_s3_prefix: String
 
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
@@ -591,7 +593,7 @@ type elbv2__loadbalancer implements IResource {
     alti__load_balancer_state: String!
     alti__type: String!
     alti__ip_address_type: String!
-    alti__access_logs_enabled: Boolean!
+    alti__access_logs_enabled: String! # TODO: Check why this is stored as a string (e.g. "false", including the quotes)
     alti__access_logs_s3_prefix: String
 
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT)
@@ -628,7 +630,7 @@ type elbv2__targetgroup implements IResource {
 
     vpc: ec2__vpc @relation(name:"alti__vpc", direction: OUT) # TODO: Check why this seems to appear 'double' in Neo4j?
     loadbalancers: [elbv2__loadbalancer] @relation(name: "alti__loadbalancer", direction: OUT)
-    target_health_descriptions: [alti__target_health_descriptions] @relation(@name: "alti__target_health_descriptions", direction: OUT)
+    target_health_descriptions: [alti__target_health_descriptions] @relation(name: "alti__target_health_descriptions", direction: OUT)
 }
 
 # part of altimeter/aws/resource/elbv2/target_group.py

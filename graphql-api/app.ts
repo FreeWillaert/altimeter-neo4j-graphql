@@ -34,6 +34,18 @@ const resolvers = {
             return (parent.alti__account_id) ? accountNames[parent.alti__account_id] || `[${parent.alti__account_id} UNKNOWN]` : "[need alti__account_id]"
         }
     },
+    ec2__vpc: {
+        name(parent:any) {
+            if(!parent.tags) return "[need tags]"
+
+            const nameTag = parent.tags.filter((t:any) => t["alti__key"] === "Name")[0]
+            if(!nameTag) return "[need Name tag]"
+            
+            const nameTagValue = nameTag["alti__value"]
+            if(!nameTagValue) return "[need Name tag value]"
+            return nameTagValue
+        }
+    },
     Query: {
         internet_exposed_ec2_instances: async (parent:any, args:any, context:any, info:any) => {
             const internet_exposed_filter = {
