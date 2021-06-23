@@ -10,6 +10,11 @@ Attach policies:
 aws events put-events --entries '[{"Source":"altimeter", "DetailType": "start", "Detail":"{}"}]'
 ```
 
+# Deploying to a Control Tower Audit Account
+Control Tower places a guardrail "Guardrail: Disallow Changes to Encryption Configuration for Amazon S3 Buckets" (https://docs.aws.amazon.com/controltower/latest/userguide/elective-guardrails.html#log-archive-encryption-enabled) on the Audit account (via the Core OU) which causes both the CDK Bootstrap and the initial deployment to fail, since in both cases an encrypted S3 bucket needs to be created.
+
+To get around this, assume the 'AWSControlTowerExecution' role from a principal in the master account, and then bootstrap and deploy. 
+
 
 # Welcome to this CDK Python project!
 
