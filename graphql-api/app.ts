@@ -17,6 +17,19 @@ let theHandler: any = null
 // TODO: Get account names json through http request
 const accountNames:any = JSON.parse(fs.readFileSync('./accounts.json','utf-8'))
 
+function getNameFromTags (parent:any) {
+    {
+        if(!parent.tags) return "[need tags]"
+
+        const nameTag = parent.tags.filter((t:any) => t["alti__key"] === "Name")[0]
+        if(!nameTag) return "[need Name tag]"
+        
+        const nameTagValue = nameTag["alti__value"]
+        if(!nameTagValue) return "[need Name tag value]"
+        return nameTagValue
+    }
+}
+
 // TODO: Move to separate module
 const resolvers = {
 
@@ -35,16 +48,10 @@ const resolvers = {
         }
     },
     ec2__vpc: {
-        name(parent:any) {
-            if(!parent.tags) return "[need tags]"
-
-            const nameTag = parent.tags.filter((t:any) => t["alti__key"] === "Name")[0]
-            if(!nameTag) return "[need Name tag]"
-            
-            const nameTagValue = nameTag["alti__value"]
-            if(!nameTagValue) return "[need Name tag value]"
-            return nameTagValue
-        }
+        name: getNameFromTags
+    },
+    ec2__subnet: {
+        name: getNameFromTags
     },
     Query: {
         internet_exposed_ec2_instances: async (parent:any, args:any, context:any, info:any) => {

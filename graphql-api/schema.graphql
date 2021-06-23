@@ -383,6 +383,8 @@ type ec2__subnet implements IResource {
     # TODO: The plural is a bug in altimeter?
     availability_zones: [alti__availability_zones] @relation(name: "alti__subnet", direction: IN)
     loadbalancers: [elb__loadbalancer] @relation(name: "alti__subnet", direction: IN)
+
+    name: String @neo4j_ignore
 }
 
 # altimeter/aws/resource/ec2/transit_gateway_vpc_attachment.py
