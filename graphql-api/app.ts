@@ -233,7 +233,11 @@ const createHandler = async () => {
         if(!handler) {
             const serverConfig = await createServerConfig()
             const server = new ApolloServer(serverConfig); // This is the 'lambda' ApolloServer!
-            handler = server.createHandler();
+            handler = server.createHandler({
+                cors: {
+                    origin: '*'
+                }
+            });
             theHandler = handler
         }
 
